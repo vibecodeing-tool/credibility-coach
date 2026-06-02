@@ -366,9 +366,7 @@ function RunInterview() {
               tone={phase === "recording" ? "recording" : "primary"}
             />
             <div className="mt-3 text-xs text-muted-foreground">
-              {phase === "reading" && "Recording starts automatically"}
-              {phase === "recording" && "Auto-stops at 0"}
-              {phase === "saving" && "Writing to your folder"}
+              {saving ? "Writing to your folder" : phase === "reading" ? "Recording starts automatically" : phase === "recording" ? "Auto-stops at 0" : ""}
             </div>
           </div>
         </div>
