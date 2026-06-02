@@ -55,6 +55,7 @@ function RunInterview() {
   const [meta, setMeta] = useState<SessionMetadata | null>(null);
   const [index, setIndex] = useState(0);
   const [phase, setPhase] = useState<Phase>("preparing");
+  const [saving, setSaving] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [showAbort, setShowAbort] = useState(false);
