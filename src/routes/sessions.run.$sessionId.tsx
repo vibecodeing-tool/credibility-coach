@@ -284,7 +284,7 @@ function RunInterview() {
   };
 
   const current = plan[index];
-  const progress = plan.length ? ((index + (phase === "recording" || phase === "saving" ? 0.5 : 0)) / plan.length) * 100 : 0;
+  const progress = plan.length ? ((index + (phase === "recording" || saving ? 0.5 : 0)) / plan.length) * 100 : 0;
 
   const phaseSecondsTotal = useMemo(() => {
     if (!current) return 0;
