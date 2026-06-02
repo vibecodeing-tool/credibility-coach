@@ -13,6 +13,7 @@ import { Route as QuestionsRouteImport } from './routes/questions'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SessionsIndexRouteImport } from './routes/sessions.index'
 import { Route as SessionsNewRouteImport } from './routes/sessions.new'
+import { Route as SessionsSessionIdRouteImport } from './routes/sessions.$sessionId'
 import { Route as SessionsRunSessionIdRouteImport } from './routes/sessions.run.$sessionId'
 import { Route as SessionsCompleteSessionIdRouteImport } from './routes/sessions.complete.$sessionId'
 
@@ -36,6 +37,11 @@ const SessionsNewRoute = SessionsNewRouteImport.update({
   path: '/sessions/new',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SessionsSessionIdRoute = SessionsSessionIdRouteImport.update({
+  id: '/sessions/$sessionId',
+  path: '/sessions/$sessionId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SessionsRunSessionIdRoute = SessionsRunSessionIdRouteImport.update({
   id: '/sessions/run/$sessionId',
   path: '/sessions/run/$sessionId',
@@ -51,6 +57,7 @@ const SessionsCompleteSessionIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/questions': typeof QuestionsRoute
+  '/sessions/$sessionId': typeof SessionsSessionIdRoute
   '/sessions/new': typeof SessionsNewRoute
   '/sessions/': typeof SessionsIndexRoute
   '/sessions/complete/$sessionId': typeof SessionsCompleteSessionIdRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/questions': typeof QuestionsRoute
+  '/sessions/$sessionId': typeof SessionsSessionIdRoute
   '/sessions/new': typeof SessionsNewRoute
   '/sessions': typeof SessionsIndexRoute
   '/sessions/complete/$sessionId': typeof SessionsCompleteSessionIdRoute
@@ -68,6 +76,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/questions': typeof QuestionsRoute
+  '/sessions/$sessionId': typeof SessionsSessionIdRoute
   '/sessions/new': typeof SessionsNewRoute
   '/sessions/': typeof SessionsIndexRoute
   '/sessions/complete/$sessionId': typeof SessionsCompleteSessionIdRoute
@@ -78,6 +87,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/questions'
+    | '/sessions/$sessionId'
     | '/sessions/new'
     | '/sessions/'
     | '/sessions/complete/$sessionId'
@@ -86,6 +96,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/questions'
+    | '/sessions/$sessionId'
     | '/sessions/new'
     | '/sessions'
     | '/sessions/complete/$sessionId'
@@ -94,6 +105,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/questions'
+    | '/sessions/$sessionId'
     | '/sessions/new'
     | '/sessions/'
     | '/sessions/complete/$sessionId'
@@ -103,6 +115,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   QuestionsRoute: typeof QuestionsRoute
+  SessionsSessionIdRoute: typeof SessionsSessionIdRoute
   SessionsNewRoute: typeof SessionsNewRoute
   SessionsIndexRoute: typeof SessionsIndexRoute
   SessionsCompleteSessionIdRoute: typeof SessionsCompleteSessionIdRoute
@@ -139,6 +152,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SessionsNewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sessions/$sessionId': {
+      id: '/sessions/$sessionId'
+      path: '/sessions/$sessionId'
+      fullPath: '/sessions/$sessionId'
+      preLoaderRoute: typeof SessionsSessionIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sessions/run/$sessionId': {
       id: '/sessions/run/$sessionId'
       path: '/sessions/run/$sessionId'
@@ -159,6 +179,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   QuestionsRoute: QuestionsRoute,
+  SessionsSessionIdRoute: SessionsSessionIdRoute,
   SessionsNewRoute: SessionsNewRoute,
   SessionsIndexRoute: SessionsIndexRoute,
   SessionsCompleteSessionIdRoute: SessionsCompleteSessionIdRoute,
