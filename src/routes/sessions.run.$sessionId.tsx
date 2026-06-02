@@ -55,6 +55,7 @@ function RunInterview() {
   const [meta, setMeta] = useState<SessionMetadata | null>(null);
   const [index, setIndex] = useState(0);
   const [phase, setPhase] = useState<Phase>("preparing");
+  const [saving, setSaving] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [showAbort, setShowAbort] = useState(false);
@@ -168,7 +169,7 @@ function RunInterview() {
       const recordingDuration = Math.round((Date.now() - startedAt) / 1000);
       const blob = new Blob(chunks, { type: mime || "video/webm" });
       if (cancelled) return;
-      setPhase("saving");
+      setSaving(true);
       try {
         const filename = answerFilename(index, q.question);
         await writeBlob(await getSessionDir(handle, sessionId, true), filename, blob);
@@ -189,11 +190,12 @@ function RunInterview() {
         setMeta(nextMeta);
         await writeSessionMetadata(handle, sessionId, nextMeta);
       } catch (e) {
+        setSaving(false);
         setError("Failed to save recording: " + (e as Error).message);
         setPhase("error");
         return;
       }
-      if (cancelled) return;
+      setSaving(false);
       // Advance
       if (index + 1 >= plan.length) {
         const finalMeta: SessionMetadata = {
@@ -282,7 +284,7 @@ function RunInterview() {
   };
 
   const current = plan[index];
-  const progress = plan.length ? ((index + (phase === "recording" || phase === "saving" ? 0.5 : 0)) / plan.length) * 100 : 0;
+  const progress = plan.length ? ((index + (phase === "recording" || saving ? 0.5 : 0)) / plan.length) * 100 : 0;
 
   const phaseSecondsTotal = useMemo(() => {
     if (!current) return 0;
@@ -350,10 +352,7 @@ function RunInterview() {
         <div className="flex flex-col items-center justify-center gap-8 p-6 md:p-12">
           <div className="text-center">
             <div className="text-xs uppercase tracking-widest text-muted-foreground">
-              {phase === "reading" && "Read the question"}
-              {phase === "recording" && "Answer now"}
-              {phase === "saving" && "Saving…"}
-              {phase === "preparing" && "Preparing camera…"}
+              {saving ? "Saving…" : phase === "reading" ? "Read the question" : phase === "recording" ? "Answer now" : phase === "preparing" ? "Preparing camera…" : ""}
             </div>
             <h2 className="mt-4 font-display text-2xl md:text-4xl font-semibold leading-tight max-w-3xl">
               {current.question}
@@ -367,9 +366,7 @@ function RunInterview() {
               tone={phase === "recording" ? "recording" : "primary"}
             />
             <div className="mt-3 text-xs text-muted-foreground">
-              {phase === "reading" && "Recording starts automatically"}
-              {phase === "recording" && "Auto-stops at 0"}
-              {phase === "saving" && "Writing to your folder"}
+              {saving ? "Writing to your folder" : phase === "reading" ? "Recording starts automatically" : phase === "recording" ? "Auto-stops at 0" : ""}
             </div>
           </div>
         </div>
