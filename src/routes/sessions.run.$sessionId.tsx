@@ -169,7 +169,7 @@ function RunInterview() {
       const recordingDuration = Math.round((Date.now() - startedAt) / 1000);
       const blob = new Blob(chunks, { type: mime || "video/webm" });
       if (cancelled) return;
-      setPhase("saving");
+      setSaving(true);
       try {
         const filename = answerFilename(index, q.question);
         await writeBlob(await getSessionDir(handle, sessionId, true), filename, blob);
@@ -190,11 +190,12 @@ function RunInterview() {
         setMeta(nextMeta);
         await writeSessionMetadata(handle, sessionId, nextMeta);
       } catch (e) {
+        setSaving(false);
         setError("Failed to save recording: " + (e as Error).message);
         setPhase("error");
         return;
       }
-      if (cancelled) return;
+      setSaving(false);
       // Advance
       if (index + 1 >= plan.length) {
         const finalMeta: SessionMetadata = {
