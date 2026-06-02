@@ -352,10 +352,7 @@ function RunInterview() {
         <div className="flex flex-col items-center justify-center gap-8 p-6 md:p-12">
           <div className="text-center">
             <div className="text-xs uppercase tracking-widest text-muted-foreground">
-              {phase === "reading" && "Read the question"}
-              {phase === "recording" && "Answer now"}
-              {phase === "saving" && "Saving…"}
-              {phase === "preparing" && "Preparing camera…"}
+              {saving ? "Saving…" : phase === "reading" ? "Read the question" : phase === "recording" ? "Answer now" : phase === "preparing" ? "Preparing camera…" : ""}
             </div>
             <h2 className="mt-4 font-display text-2xl md:text-4xl font-semibold leading-tight max-w-3xl">
               {current.question}
