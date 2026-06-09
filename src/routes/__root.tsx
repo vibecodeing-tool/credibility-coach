@@ -80,12 +80,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "CAS Interview Simulator" },
+      { title: "Mirrorinterview AI" },
       {
         name: "description",
         content:
           "Local-first CAS / UK Student Visa Credibility Interview practice with timed reading, automatic webcam recording, and on-device session history.",
       },
+      { property: "og:title", content: "Mirrorinterview AI" },
+      { name: "twitter:title", content: "Mirrorinterview AI" },
+      { name: "description", content: "Prepare for UK visa interviews with this desktop and mobile-responsive simulator." },
+      { property: "og:description", content: "Prepare for UK visa interviews with this desktop and mobile-responsive simulator." },
+      { name: "twitter:description", content: "Prepare for UK visa interviews with this desktop and mobile-responsive simulator." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/370c4837-762d-490b-b9f0-215ce3334087/id-preview-0867dc94--123b7c61-facd-4261-bee5-da25a80a88d5.lovable.app-1781007559409.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/370c4837-762d-490b-b9f0-215ce3334087/id-preview-0867dc94--123b7c61-facd-4261-bee5-da25a80a88d5.lovable.app-1781007559409.png" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:type", content: "website" },
     ],
     links: [{ rel: "stylesheet", href: appCss }],
   }),
