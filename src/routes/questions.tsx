@@ -74,6 +74,7 @@ function QuestionsPage() {
     setEditing({
       id: newId(),
       question: "",
+      answer: "",
       readingTime: 15,
       answerTime: 60,
       category: "",
@@ -94,7 +95,11 @@ function QuestionsPage() {
       return;
     }
     try {
-      await upsert({ ...editing, category: editing.category?.trim() || undefined });
+      await upsert({
+        ...editing,
+        category: editing.category?.trim() || undefined,
+        answer: editing.answer?.trim() ? editing.answer : undefined,
+      });
       toast.success("Question saved");
       setOpen(false);
       setEditing(null);
@@ -168,6 +173,7 @@ function QuestionsPage() {
                     {q.category && <Badge variant="secondary">{q.category}</Badge>}
                     <Badge variant="outline">Read {q.readingTime}s</Badge>
                     <Badge variant="outline">Answer {q.answerTime}s</Badge>
+                    {q.answer?.trim() && <Badge variant="outline">Has reference answer</Badge>}
                   </div>
                 </div>
                 <div className="flex gap-1">
@@ -243,6 +249,19 @@ function QuestionsPage() {
                   onChange={(e) => setEditing({ ...editing, category: e.target.value })}
                   placeholder="e.g. Motivation, Finance, Course"
                 />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="q-ref-ans">Reference answer (optional)</Label>
+                <Textarea
+                  id="q-ref-ans"
+                  rows={5}
+                  value={editing.answer ?? ""}
+                  onChange={(e) => setEditing({ ...editing, answer: e.target.value })}
+                  placeholder="Write the ideal / prepared answer here. It is NEVER shown during the interview — only on the session review page so you can compare it with what you actually said."
+                />
+                <p className="text-xs text-muted-foreground">
+                  Hidden during interviews. Visible only in Session History → Review.
+                </p>
               </div>
             </div>
           )}

@@ -1,6 +1,7 @@
 export interface Question {
   id: string;
   question: string;
+  answer?: string;
   readingTime: number;
   answerTime: number;
   category?: string;
@@ -10,6 +11,7 @@ export interface Question {
 export interface SessionQuestion {
   questionId: string;
   questionText: string;
+  answer?: string;
   readingTime: number;
   answerTime: number;
   videoFile: string;
