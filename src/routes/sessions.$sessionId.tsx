@@ -122,17 +122,33 @@ function ReviewSession() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
-                {urls[q.videoFile] ? (
-                  <video
-                    src={urls[q.videoFile]}
-                    controls
-                    className="aspect-video w-full rounded-md bg-black"
-                  />
-                ) : (
-                  <div className="grid aspect-video w-full place-items-center rounded-md bg-muted text-sm text-muted-foreground">
-                    Recording unavailable
+                <div className="grid gap-4 md:grid-cols-2">
+                  {urls[q.videoFile] ? (
+                    <video
+                      src={urls[q.videoFile]}
+                      controls
+                      className="aspect-video w-full rounded-md bg-black"
+                    />
+                  ) : (
+                    <div className="grid aspect-video w-full place-items-center rounded-md bg-muted text-sm text-muted-foreground">
+                      Recording unavailable
+                    </div>
+                  )}
+                  <div className="flex flex-col">
+                    <div className="mb-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Reference answer
+                    </div>
+                    {q.answer?.trim() ? (
+                      <div className="flex-1 whitespace-pre-wrap rounded-md border bg-muted/30 p-3 text-sm leading-relaxed">
+                        {q.answer}
+                      </div>
+                    ) : (
+                      <div className="flex flex-1 items-center justify-center rounded-md border border-dashed p-3 text-xs text-muted-foreground">
+                        No reference answer was saved for this question.
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
                 <div className="flex justify-end">
                   <Button size="sm" variant="outline" onClick={() => download(q.videoFile)}>
                     <Download className="mr-2 h-4 w-4" /> Download .webm

@@ -27,6 +27,7 @@ export const Route = createFileRoute("/sessions/run/$sessionId")({
 interface PlannedQuestion {
   id: string;
   question: string;
+  answer?: string;
   readingTime: number;
   answerTime: number;
 }
@@ -176,6 +177,7 @@ function RunInterview() {
         const record: SessionQuestion = {
           questionId: q.id,
           questionText: q.question,
+          answer: q.answer,
           readingTime: q.readingTime,
           answerTime: q.answerTime,
           videoFile: filename,

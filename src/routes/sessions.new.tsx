@@ -94,6 +94,7 @@ function NewSessionPage() {
           preview.map((q) => ({
             id: q.id,
             question: q.question,
+            answer: q.answer,
             readingTime: q.readingTime,
             answerTime: q.answerTime,
           })),
