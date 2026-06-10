@@ -84,6 +84,7 @@ function NewSessionPage() {
           count: countMode === "all" ? "all" : customCount,
           rangeStart,
           rangeEnd: effectiveRangeEnd,
+          transitionMode,
         },
       };
       await writeSessionMetadata(handle, sessionId, meta);
@@ -91,15 +92,16 @@ function NewSessionPage() {
       // the exact selection (especially for random mode).
       sessionStorage.setItem(
         `cas:plan:${sessionId}`,
-        JSON.stringify(
-          preview.map((q) => ({
+        JSON.stringify({
+          transitionMode,
+          questions: preview.map((q) => ({
             id: q.id,
             question: q.question,
             answer: q.answer,
             readingTime: q.readingTime,
             answerTime: q.answerTime,
           })),
-        ),
+        }),
       );
       navigate({ to: "/sessions/run/$sessionId", params: { sessionId } });
     } catch (e) {
