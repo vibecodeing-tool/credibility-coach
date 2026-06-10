@@ -192,6 +192,30 @@ function QuestionsPage() {
                   </Button>
                 </div>
               </div>
+              <Collapsible
+                open={!!openAnswers[q.id]}
+                onOpenChange={(o) => setOpenAnswers((s) => ({ ...s, [q.id]: o }))}
+              >
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="sm" className="mt-3 h-8 px-2 text-xs text-muted-foreground">
+                    <ChevronDown
+                      className={`mr-1 h-3.5 w-3.5 transition-transform ${openAnswers[q.id] ? "rotate-180" : ""}`}
+                    />
+                    {openAnswers[q.id] ? "Hide answer" : "Show answer"}
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-2">
+                  {q.answer?.trim() ? (
+                    <div className="max-h-72 overflow-y-auto whitespace-pre-wrap break-words rounded-md border bg-muted/30 p-3 text-sm leading-relaxed">
+                      {q.answer}
+                    </div>
+                  ) : (
+                    <p className="rounded-md border border-dashed p-3 text-xs italic text-muted-foreground">
+                      No reference answer available.
+                    </p>
+                  )}
+                </CollapsibleContent>
+              </Collapsible>
             </Card>
           ))}
         </div>
