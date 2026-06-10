@@ -38,6 +38,7 @@ function NewSessionPage() {
   const [customCount, setCustomCount] = useState(10);
   const [rangeStart, setRangeStart] = useState(1);
   const [rangeEnd, setRangeEnd] = useState<number>(0);
+  const [transitionMode, setTransitionMode] = useState<"manual" | "automatic">("manual");
   const [starting, setStarting] = useState(false);
 
   // Initialize range end when questions load.
