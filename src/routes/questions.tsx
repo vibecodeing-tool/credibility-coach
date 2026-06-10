@@ -55,6 +55,7 @@ function QuestionsPage() {
   const [editing, setEditing] = useState<Question | null>(null);
   const [open, setOpen] = useState(false);
   const [deleting, setDeleting] = useState<Question | null>(null);
+  const [openAnswers, setOpenAnswers] = useState<Record<string, boolean>>({});
 
   const categories = useMemo(() => {
     const set = new Set<string>();
