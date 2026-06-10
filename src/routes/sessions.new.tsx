@@ -38,6 +38,7 @@ function NewSessionPage() {
   const [customCount, setCustomCount] = useState(10);
   const [rangeStart, setRangeStart] = useState(1);
   const [rangeEnd, setRangeEnd] = useState<number>(0);
+  const [transitionMode, setTransitionMode] = useState<"manual" | "automatic">("manual");
   const [starting, setStarting] = useState(false);
 
   // Initialize range end when questions load.
@@ -83,6 +84,7 @@ function NewSessionPage() {
           count: countMode === "all" ? "all" : customCount,
           rangeStart,
           rangeEnd: effectiveRangeEnd,
+          transitionMode,
         },
       };
       await writeSessionMetadata(handle, sessionId, meta);
@@ -90,15 +92,16 @@ function NewSessionPage() {
       // the exact selection (especially for random mode).
       sessionStorage.setItem(
         `cas:plan:${sessionId}`,
-        JSON.stringify(
-          preview.map((q) => ({
+        JSON.stringify({
+          transitionMode,
+          questions: preview.map((q) => ({
             id: q.id,
             question: q.question,
             answer: q.answer,
             readingTime: q.readingTime,
             answerTime: q.answerTime,
           })),
-        ),
+        }),
       );
       navigate({ to: "/sessions/run/$sessionId", params: { sessionId } });
     } catch (e) {
@@ -222,6 +225,39 @@ function NewSessionPage() {
               </div>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Interview settings</CardTitle>
+          <CardDescription>Choose how questions advance during the interview.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <RadioGroup
+            value={transitionMode}
+            onValueChange={(v) => setTransitionMode(v as "manual" | "automatic")}
+            className="grid gap-2 sm:grid-cols-2"
+          >
+            <label className="flex cursor-pointer items-start gap-3 rounded-md border p-3 has-[:checked]:border-primary has-[:checked]:bg-accent/40">
+              <RadioGroupItem value="manual" className="mt-0.5" />
+              <div>
+                <div className="text-sm font-medium">Manual (recommended)</div>
+                <div className="text-xs text-muted-foreground">
+                  Pause after each answer; click Next question to continue.
+                </div>
+              </div>
+            </label>
+            <label className="flex cursor-pointer items-start gap-3 rounded-md border p-3 has-[:checked]:border-primary has-[:checked]:bg-accent/40">
+              <RadioGroupItem value="automatic" className="mt-0.5" />
+              <div>
+                <div className="text-sm font-medium">Automatic</div>
+                <div className="text-xs text-muted-foreground">
+                  Move to the next question as soon as the recording is saved.
+                </div>
+              </div>
+            </label>
+          </RadioGroup>
         </CardContent>
       </Card>
 

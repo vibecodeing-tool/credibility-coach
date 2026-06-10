@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { CircleDot, X } from "lucide-react";
+import { ArrowRight, CheckCircle2, CircleDot, X } from "lucide-react";
 import { useFsRoot } from "@/hooks/use-fs-root";
 import { readSession, writeBlob, writeSessionMetadata, getSessionDir } from "@/lib/fs/store";
 import { answerFilename } from "@/lib/fs/filenames";
@@ -32,7 +32,17 @@ interface PlannedQuestion {
   answerTime: number;
 }
 
-type Phase = "preparing" | "reading" | "recording" | "saving" | "done" | "error" | "aborted";
+type TransitionMode = "manual" | "automatic";
+
+type Phase =
+  | "preparing"
+  | "reading"
+  | "recording"
+  | "between"
+  | "finished"
+  | "done"
+  | "error"
+  | "aborted";
 
 function pickMime(): string {
   const types = [
@@ -53,6 +63,7 @@ function RunInterview() {
   const navigate = useNavigate();
 
   const [plan, setPlan] = useState<PlannedQuestion[]>([]);
+  const [transitionMode, setTransitionMode] = useState<TransitionMode>("manual");
   const [meta, setMeta] = useState<SessionMetadata | null>(null);
   const [index, setIndex] = useState(0);
   const [phase, setPhase] = useState<Phase>("preparing");
@@ -67,6 +78,7 @@ function RunInterview() {
   const abortRef = useRef<AbortController>(new AbortController());
   const metaRef = useRef<SessionMetadata | null>(null);
   const startTimeRef = useRef<number>(0);
+  const transitionModeRef = useRef<TransitionMode>("manual");
 
   // ---- Load plan + metadata ----
   useEffect(() => {
@@ -80,7 +92,13 @@ function RunInterview() {
           setPhase("error");
           return;
         }
-        const planned: PlannedQuestion[] = JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        // Backwards compatible: old shape was an array of questions.
+        const planned: PlannedQuestion[] = Array.isArray(parsed) ? parsed : parsed.questions;
+        const mode: TransitionMode =
+          !Array.isArray(parsed) && parsed.transitionMode === "automatic"
+            ? "automatic"
+            : "manual";
         const m = await readSession(handle, sessionId);
         if (!alive) return;
         if (!m) {
@@ -89,6 +107,8 @@ function RunInterview() {
           return;
         }
         setPlan(planned);
+        setTransitionMode(mode);
+        transitionModeRef.current = mode;
         setMeta(m);
         metaRef.current = m;
       } catch (e) {
@@ -130,6 +150,14 @@ function RunInterview() {
       cancelled = true;
     };
   }, [meta, plan, phase]);
+
+  // Re-attach the live stream to the <video> element whenever it remounts
+  // (e.g. when phase changes between recording/between).
+  useEffect(() => {
+    if (videoRef.current && streamRef.current && videoRef.current.srcObject !== streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+    }
+  }, [phase]);
 
   // ---- Drive the state machine ----
   useEffect(() => {
@@ -183,10 +211,12 @@ function RunInterview() {
           videoFile: filename,
           recordingDuration,
         };
+        const isLast = index + 1 >= plan.length;
         const nextMeta: SessionMetadata = {
           ...metaRef.current!,
           questions: [...metaRef.current!.questions, record],
           durationSeconds: Math.round((Date.now() - startTimeRef.current) / 1000),
+          completed: isLast,
         };
         metaRef.current = nextMeta;
         setMeta(nextMeta);
@@ -198,19 +228,23 @@ function RunInterview() {
         return;
       }
       setSaving(false);
-      // Advance
-      if (index + 1 >= plan.length) {
-        const finalMeta: SessionMetadata = {
-          ...metaRef.current!,
-          completed: true,
-        };
-        metaRef.current = finalMeta;
-        await writeSessionMetadata(handle, sessionId, finalMeta);
-        cleanup();
-        setPhase("done");
+      const isLast = index + 1 >= plan.length;
+      const mode = transitionModeRef.current;
+      if (isLast) {
+        if (mode === "automatic") {
+          cleanup();
+          setPhase("done");
+        } else {
+          cleanup();
+          setPhase("finished");
+        }
       } else {
-        setIndex((i) => i + 1);
-        setPhase("reading");
+        if (mode === "automatic") {
+          setIndex((i) => i + 1);
+          setPhase("reading");
+        } else {
+          setPhase("between");
+        }
       }
     }
 
@@ -285,8 +319,17 @@ function RunInterview() {
     navigate({ to: "/sessions" });
   };
 
+  const handleNext = () => {
+    setIndex((i) => i + 1);
+    setPhase("reading");
+  };
+
   const current = plan[index];
-  const progress = plan.length ? ((index + (phase === "recording" || saving ? 0.5 : 0)) / plan.length) * 100 : 0;
+  const progress = plan.length
+    ? (((phase === "between" || phase === "finished" ? index + 1 : index + (phase === "recording" || saving ? 0.5 : 0)) /
+        plan.length) *
+        100)
+    : 0;
 
   const phaseSecondsTotal = useMemo(() => {
     if (!current) return 0;
@@ -302,6 +345,38 @@ function RunInterview() {
           <h1 className="font-display text-2xl font-semibold">Couldn't start interview</h1>
           <p className="text-sm text-muted-foreground">{error}</p>
           <Button onClick={() => navigate({ to: "/sessions/new" })}>Back</Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (phase === "finished") {
+    return (
+      <div className="grid min-h-screen place-items-center p-6">
+        <div className="max-w-md space-y-6 text-center">
+          <div className="flex justify-center">
+            <CheckCircle2 className="h-16 w-16 text-primary" />
+          </div>
+          <div className="space-y-2">
+            <h1 className="font-display text-3xl font-semibold">Interview completed</h1>
+            <p className="text-sm text-muted-foreground">
+              All {plan.length} answers saved to your folder.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
+            <Button
+              size="lg"
+              onClick={() =>
+                navigate({ to: "/sessions/$sessionId", params: { sessionId } })
+              }
+            >
+              View session summary
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="lg" onClick={() => navigate({ to: "/sessions" })}>
+              Back to sessions
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -325,7 +400,11 @@ function RunInterview() {
           </div>
           <div className="hidden sm:block text-xs text-muted-foreground">·</div>
           <div className="text-sm font-medium">
-            Question {index + 1} of {plan.length}
+            Question {Math.min(index + 1, plan.length)} of {plan.length}
+          </div>
+          <div className="hidden sm:block text-xs text-muted-foreground">·</div>
+          <div className="hidden sm:block text-xs text-muted-foreground capitalize">
+            {transitionMode} mode
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -350,27 +429,66 @@ function RunInterview() {
 
       {/* Body */}
       <div className="flex-1 grid lg:grid-cols-[1.4fr_1fr] gap-0">
-        {/* Question + countdown */}
+        {/* Question + countdown OR between-question card */}
         <div className="flex flex-col items-center justify-center gap-8 p-6 md:p-12">
-          <div className="text-center">
-            <div className="text-xs uppercase tracking-widest text-muted-foreground">
-              {saving ? "Saving…" : phase === "reading" ? "Read the question" : phase === "recording" ? "Answer now" : phase === "preparing" ? "Preparing camera…" : ""}
+          {phase === "between" ? (
+            <div className="flex flex-col items-center gap-6 text-center max-w-md">
+              <CheckCircle2 className="h-16 w-16 text-primary" />
+              <div className="space-y-2">
+                <h2 className="font-display text-3xl font-semibold">
+                  Answer recorded successfully
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Question {index + 1} of {plan.length} completed
+                </p>
+              </div>
+              <div className="flex flex-col gap-2 w-full sm:w-auto sm:flex-row">
+                <Button size="lg" onClick={handleNext}>
+                  Next question
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="lg" onClick={() => setShowAbort(true)}>
+                  Abort interview
+                </Button>
+              </div>
             </div>
-            <h2 className="mt-4 font-display text-2xl md:text-4xl font-semibold leading-tight max-w-3xl">
-              {current.question}
-            </h2>
-          </div>
+          ) : (
+            <>
+              <div className="text-center">
+                <div className="text-xs uppercase tracking-widest text-muted-foreground">
+                  {saving
+                    ? "Saving…"
+                    : phase === "reading"
+                      ? "Read the question"
+                      : phase === "recording"
+                        ? "Answer now"
+                        : phase === "preparing"
+                          ? "Preparing camera…"
+                          : ""}
+                </div>
+                <h2 className="mt-4 font-display text-2xl md:text-4xl font-semibold leading-tight max-w-3xl">
+                  {current.question}
+                </h2>
+              </div>
 
-          <div className="flex flex-col items-center">
-            <CountdownRing
-              seconds={secondsLeft}
-              total={phaseSecondsTotal || 1}
-              tone={phase === "recording" ? "recording" : "primary"}
-            />
-            <div className="mt-3 text-xs text-muted-foreground">
-              {saving ? "Writing to your folder" : phase === "reading" ? "Recording starts automatically" : phase === "recording" ? "Auto-stops at 0" : ""}
-            </div>
-          </div>
+              <div className="flex flex-col items-center">
+                <CountdownRing
+                  seconds={secondsLeft}
+                  total={phaseSecondsTotal || 1}
+                  tone={phase === "recording" ? "recording" : "primary"}
+                />
+                <div className="mt-3 text-xs text-muted-foreground">
+                  {saving
+                    ? "Writing to your folder"
+                    : phase === "reading"
+                      ? "Recording starts automatically"
+                      : phase === "recording"
+                        ? "Auto-stops at 0"
+                        : ""}
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Webcam preview */}

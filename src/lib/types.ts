@@ -31,5 +31,6 @@ export interface SessionMetadata {
     count: number | "all";
     rangeStart?: number;
     rangeEnd?: number;
+    transitionMode?: "manual" | "automatic";
   };
 }
