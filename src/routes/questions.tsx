@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Plus, Pencil, Trash2, Search, ChevronDown } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, ChevronDown, Shuffle } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { useQuestions } from "@/hooks/use-questions";
