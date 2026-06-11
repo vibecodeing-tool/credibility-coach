@@ -65,6 +65,8 @@ function RunInterview() {
 
   const [plan, setPlan] = useState<PlannedQuestion[]>([]);
   const [transitionMode, setTransitionMode] = useState<TransitionMode>("manual");
+  const [useVariations, setUseVariations] = useState(false);
+  const [displayedQuestions, setDisplayedQuestions] = useState<Record<number, string>>({});
   const [meta, setMeta] = useState<SessionMetadata | null>(null);
   const [index, setIndex] = useState(0);
   const [phase, setPhase] = useState<Phase>("preparing");
