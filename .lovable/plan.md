@@ -1,83 +1,62 @@
-# Alternative Question Variations
+# Speaking Drill Mode (Quick Practice)
 
-Add optional alternative phrasings for each question. Manage them in the Questions page, optionally use a random variation during interview sessions, and record which wording was actually shown in session history.
+A lightweight practice flow for a single question — stopwatch + temporary in-memory recording, nothing written to disk.
 
-All data continues to live in the user's local data folder (`questions.json` + per-session `metadata.json`). No DB, no new dependencies.
+## New route
 
----
+`src/routes/drill.tsx` → `/drill`
 
-## 1. Data model (`src/lib/types.ts`)
+Added to the sidebar nav (`src/components/app-sidebar.tsx`) as "Speaking Drill" with a `Timer`/`Mic` icon, beside Questions and Sessions.
 
-- `Question`: add `alternativeQuestions?: string[]` (optional, unlimited).
-- `SessionQuestion`: add `displayedQuestion?: string` (the wording actually shown to the user). `questionText` continues to hold the master question for backward compatibility.
-- `SessionMetadata.config`: add `useVariations?: boolean` (per-session toggle, default `false`).
+## UI flow
 
-All fields optional — old `questions.json` and old sessions keep working unchanged.
+Single page, three states driven by local component state — no router state, no persistence.
 
----
+**1. Select**
 
-## 2. Question Management (`src/routes/questions.tsx`)
+- Question picker: searchable `Select` (or simple list with filter input) populated from `useQuestions()`.
+- Shows question text, category badge, and `Target: Xs` if `answerTime` is set.
+- Primary button: **Start Practice** (disabled until a question is picked).
 
-**Card display (per question)**
-- Keep existing main question, badges, and "Show / Hide answer" collapsible.
-- Add a second `Collapsible`: **"Show variations" / "Hide variations"** (with `ChevronDown` rotate animation, same visual language as the answer toggle).
-  - Trigger only rendered when `alternativeQuestions?.length > 0`; otherwise show a muted "No variations" hint inside the row of badges (or just omit the toggle entirely — TBD, leaning omit to keep the card clean).
-  - Content: bullet list of variations inside the same `border bg-muted/30` panel used for the answer, with `whitespace-pre-wrap break-words` and `max-h-72 overflow-y-auto`.
-- Add a small badge `Variations: N` next to the existing `Has reference answer` badge when `N > 0`.
+**2. Recording**
 
-**Create/Edit dialog**
-- New section "Alternative question variations (optional)" below the reference answer field.
-- Renders one `Textarea` per variation with a trash icon button (`Trash2`, ghost variant) to remove it.
-- "Add variation" button (`Plus`, outline) appends an empty entry.
-- On save: trim each entry, drop empties; store `undefined` if the resulting array is empty.
-- No fixed limit. The list is scrollable inside the dialog if it grows tall (`max-h-64 overflow-y-auto`).
-- Mobile: each variation row stacks textarea + remove button; remove button stays reachable.
+- Large displayed question at top.
+- Live MM:SS stopwatch (updates every 100ms, rendered to seconds).
+- Red "● Recording" pill (reuses the recording-dot style from the runner).
+- Webcam preview (mirrored, same styling as `sessions.run`).
+- Controls: **Stop Recording**, **Cancel**.
+- If `answerTime` is set, show a subtle "Target: 60s" label next to the stopwatch. We do NOT auto-stop — the user controls duration.
 
-State held locally in the dialog's `editing` object (`editing.alternativeQuestions: string[]`).
+**3. Playback**
 
----
+- `<video controls>` bound to a `URL.createObjectURL(blob)` for the just-captured webm.
+- Stats row:
+  - "Your attempt: 42s"
+  - "Target: 60s" (only if `answerTime` set), plus a small delta chip ("-18s under" / "+5s over").
+- Controls: **Retry Practice** (revokes the object URL, clears blob, resets stopwatch, returns to Select state with the same question pre-selected), **Pick a different question** (returns to Select cleared).
 
-## 3. Interview session setup (`src/routes/sessions.new.tsx`)
+## Temporary-only recording
 
-- Add a new `Switch` (or `Checkbox`) setting: **"Use random question variations"** — default off.
-  - Help text: "When a question has alternative phrasings saved, the interview will randomly pick one for each appearance. The master question is still used for scoring/review."
-- Persist into the session plan (sessionStorage) and into `metadata.json` as `config.useVariations`.
+- `MediaRecorder` chunks held in a `useRef<Blob[]>`; final `Blob` kept in component state.
+- Object URL stored in a ref and revoked on: new attempt, question change, unmount.
+- No calls into `src/lib/fs/store.ts`, no `writeBlob`, no metadata writes. Nothing touches the session folder.
+- Each new attempt overwrites the previous blob and revokes the prior object URL — only one recording exists at a time.
 
----
+## Reused building blocks
 
-## 4. Interview runner (`src/routes/sessions.run.$sessionId.tsx`)
-
-- When advancing to a question:
-  - If `config.useVariations === true` and the question has `alternativeQuestions?.length > 0`, pick one uniformly at random from `[question, ...alternativeQuestions]` and use it as the on-screen text.
-  - Else display the master `question` as today.
-- Selection happens **once per question** (cached for that question slot) so re-renders don't re-pick.
-- On save (`writeSessionMetadata`), include `displayedQuestion` on the `SessionQuestion` entry (omit if equal to master, to keep files minimal — TBD; safe default: always include).
-
-Optionally extract the picker into `src/lib/interview/variation.ts` (`pickDisplayedQuestion(q, useVariations)`) for clarity and unit-testability.
-
----
-
-## 5. Session review (`src/routes/sessions.$sessionId.tsx`)
-
-For each recorded answer:
-- Keep showing the master question as the card title (so history stays organized by topic).
-- If `displayedQuestion` exists and differs from `questionText`, show a small subline under the title:
-  > **Asked as:** "{displayedQuestion}"
-- Reference answer block stays unchanged.
-
-This satisfies "review the exact version you answered" without disrupting the existing layout.
-
----
-
-## Out of scope
-- No persistent user preference across sessions (per-session toggle only).
-- No weighting / "never repeat last wording" logic — strictly uniform random.
-- No edits to existing recordings or migration scripts.
+- `useQuestions()` for the question list.
+- `pickMime()` + `getUserMedia` pattern copied (small, local) from `sessions.run.$sessionId.tsx` — kept inline rather than extracted, to avoid touching the runner.
+- Existing shadcn components: `Button`, `Select`, `Card`, `Badge`.
+- Recording dot styling already exists in `styles.css` (`.recording-dot`, `--recording`).
 
 ## Files touched
-- `src/lib/types.ts`
-- `src/routes/questions.tsx`
-- `src/routes/sessions.new.tsx`
-- `src/routes/sessions.run.$sessionId.tsx`
-- `src/routes/sessions.$sessionId.tsx`
-- (optional) `src/lib/interview/variation.ts`
+
+- **New**: `src/routes/drill.tsx`
+- **Edited**: `src/components/app-sidebar.tsx` (add nav link)
+
+## Out of scope
+
+- Not saved to sessions, history, or any JSON metadata.
+- No auto-stop on target time.
+- No drill-mode analytics / streaks.
+- No changes to existing session runner, question manager, or types.
