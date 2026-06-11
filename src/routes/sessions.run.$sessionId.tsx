@@ -28,6 +28,7 @@ interface PlannedQuestion {
   id: string;
   question: string;
   answer?: string;
+  alternativeQuestions?: string[];
   readingTime: number;
   answerTime: number;
 }
