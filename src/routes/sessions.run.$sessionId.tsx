@@ -82,6 +82,8 @@ function RunInterview() {
   const metaRef = useRef<SessionMetadata | null>(null);
   const startTimeRef = useRef<number>(0);
   const transitionModeRef = useRef<TransitionMode>("manual");
+  const useVariationsRef = useRef(false);
+  const displayedQuestionsRef = useRef<Record<number, string>>({});
 
   // ---- Load plan + metadata ----
   useEffect(() => {
