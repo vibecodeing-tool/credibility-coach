@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, ListChecks, PlayCircle, History, FolderOpen } from "lucide-react";
+import { LayoutDashboard, ListChecks, PlayCircle, History, FolderOpen, Timer } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 const nav = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard, exact: true },
   { title: "Questions", url: "/questions", icon: ListChecks },
+  { title: "Speaking Drill", url: "/drill", icon: Timer },
   { title: "New Session", url: "/sessions/new", icon: PlayCircle },
   { title: "History", url: "/sessions", icon: History, exact: true },
 ];

@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as QuestionsRouteImport } from './routes/questions'
+import { Route as DrillRouteImport } from './routes/drill'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SessionsIndexRouteImport } from './routes/sessions.index'
 import { Route as SessionsNewRouteImport } from './routes/sessions.new'
@@ -20,6 +21,11 @@ import { Route as SessionsCompleteSessionIdRouteImport } from './routes/sessions
 const QuestionsRoute = QuestionsRouteImport.update({
   id: '/questions',
   path: '/questions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DrillRoute = DrillRouteImport.update({
+  id: '/drill',
+  path: '/drill',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -56,6 +62,7 @@ const SessionsCompleteSessionIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/drill': typeof DrillRoute
   '/questions': typeof QuestionsRoute
   '/sessions/$sessionId': typeof SessionsSessionIdRoute
   '/sessions/new': typeof SessionsNewRoute
@@ -65,6 +72,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/drill': typeof DrillRoute
   '/questions': typeof QuestionsRoute
   '/sessions/$sessionId': typeof SessionsSessionIdRoute
   '/sessions/new': typeof SessionsNewRoute
@@ -75,6 +83,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/drill': typeof DrillRoute
   '/questions': typeof QuestionsRoute
   '/sessions/$sessionId': typeof SessionsSessionIdRoute
   '/sessions/new': typeof SessionsNewRoute
@@ -86,6 +95,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/drill'
     | '/questions'
     | '/sessions/$sessionId'
     | '/sessions/new'
@@ -95,6 +105,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/drill'
     | '/questions'
     | '/sessions/$sessionId'
     | '/sessions/new'
@@ -104,6 +115,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/drill'
     | '/questions'
     | '/sessions/$sessionId'
     | '/sessions/new'
@@ -114,6 +126,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DrillRoute: typeof DrillRoute
   QuestionsRoute: typeof QuestionsRoute
   SessionsSessionIdRoute: typeof SessionsSessionIdRoute
   SessionsNewRoute: typeof SessionsNewRoute
@@ -129,6 +142,13 @@ declare module '@tanstack/react-router' {
       path: '/questions'
       fullPath: '/questions'
       preLoaderRoute: typeof QuestionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/drill': {
+      id: '/drill'
+      path: '/drill'
+      fullPath: '/drill'
+      preLoaderRoute: typeof DrillRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -178,6 +198,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DrillRoute: DrillRoute,
   QuestionsRoute: QuestionsRoute,
   SessionsSessionIdRoute: SessionsSessionIdRoute,
   SessionsNewRoute: SessionsNewRoute,
@@ -188,3 +209,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
