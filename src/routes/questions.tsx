@@ -330,6 +330,63 @@ function QuestionsPage() {
                   Hidden during interviews. Visible only in Session History → Review.
                 </p>
               </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Alternative question variations (optional)</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setEditing({
+                        ...editing,
+                        alternativeQuestions: [...(editing.alternativeQuestions ?? []), ""],
+                      })
+                    }
+                  >
+                    <Plus className="mr-1 h-3.5 w-3.5" /> Add variation
+                  </Button>
+                </div>
+                {(editing.alternativeQuestions?.length ?? 0) === 0 ? (
+                  <p className="rounded-md border border-dashed p-3 text-xs italic text-muted-foreground">
+                    No variations yet. Add alternative phrasings of the same question.
+                  </p>
+                ) : (
+                  <div className="max-h-64 space-y-2 overflow-y-auto rounded-md border bg-muted/20 p-2">
+                    {editing.alternativeQuestions!.map((v, i) => (
+                      <div key={i} className="flex items-start gap-2">
+                        <Textarea
+                          rows={2}
+                          value={v}
+                          onChange={(e) => {
+                            const next = [...editing.alternativeQuestions!];
+                            next[i] = e.target.value;
+                            setEditing({ ...editing, alternativeQuestions: next });
+                          }}
+                          placeholder={`Variation ${i + 1}`}
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="mt-1 text-destructive hover:text-destructive"
+                          onClick={() => {
+                            const next = editing.alternativeQuestions!.filter((_, j) => j !== i);
+                            setEditing({ ...editing, alternativeQuestions: next });
+                          }}
+                          aria-label="Remove variation"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  When enabled in a session, the interview can randomly pick one of these phrasings instead of the main question.
+                </p>
+              </div>
             </div>
           )}
           <DialogFooter>
