@@ -78,6 +78,7 @@ function QuestionsPage() {
       id: newId(),
       question: "",
       answer: "",
+      alternativeQuestions: [],
       readingTime: 15,
       answerTime: 60,
       category: "",
@@ -87,7 +88,7 @@ function QuestionsPage() {
   };
 
   const openEdit = (q: Question) => {
-    setEditing({ ...q });
+    setEditing({ ...q, alternativeQuestions: q.alternativeQuestions ? [...q.alternativeQuestions] : [] });
     setOpen(true);
   };
 
