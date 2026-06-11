@@ -174,8 +174,20 @@ function RunInterview() {
     if (!plan[index]) return;
     const signal = abortRef.current.signal;
     let cancelled = false;
-
     const q = plan[index];
+
+    // Lock in displayed question for this index on first entry.
+    if (displayedQuestionsRef.current[index] === undefined) {
+      let displayed = q.question;
+      if (useVariationsRef.current && q.alternativeQuestions && q.alternativeQuestions.length > 0) {
+        const pool = [q.question, ...q.alternativeQuestions];
+        displayed = pool[Math.floor(Math.random() * pool.length)];
+      }
+      displayedQuestionsRef.current = { ...displayedQuestionsRef.current, [index]: displayed };
+      setDisplayedQuestions((s) => ({ ...s, [index]: displayed }));
+    }
+    const displayedQuestion = displayedQuestionsRef.current[index] ?? q.question;
+
 
     async function runReading() {
       await countdown(q.readingTime, setSecondsLeft, signal);
