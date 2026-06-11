@@ -228,6 +228,35 @@ function QuestionsPage() {
                   )}
                 </CollapsibleContent>
               </Collapsible>
+              {q.alternativeQuestions && q.alternativeQuestions.length > 0 && (
+                <Collapsible
+                  open={!!openVariations[q.id]}
+                  onOpenChange={(o) => setOpenVariations((s) => ({ ...s, [q.id]: o }))}
+                >
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="mt-1 h-8 px-2 text-xs text-muted-foreground">
+                      <ChevronDown
+                        className={`mr-1 h-3.5 w-3.5 transition-transform ${openVariations[q.id] ? "rotate-180" : ""}`}
+                      />
+                      {openVariations[q.id] ? "Hide variations" : "Show variations"}
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-2">
+                    <div className="max-h-72 overflow-y-auto rounded-md border bg-muted/30 p-3 text-sm leading-relaxed">
+                      <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        Alternative question variations
+                      </div>
+                      <ul className="list-disc space-y-1.5 pl-5">
+                        {q.alternativeQuestions.map((v, i) => (
+                          <li key={i} className="whitespace-pre-wrap break-words">
+                            {v}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              )}
             </Card>
           ))}
         </div>
