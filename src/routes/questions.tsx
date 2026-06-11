@@ -263,7 +263,7 @@ function QuestionsPage() {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing && questions.some((q) => q.id === editing.id) ? "Edit question" : "New question"}</DialogTitle>
             <DialogDescription>
