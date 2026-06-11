@@ -104,6 +104,8 @@ function RunInterview() {
           !Array.isArray(parsed) && parsed.transitionMode === "automatic"
             ? "automatic"
             : "manual";
+        const variations: boolean =
+          !Array.isArray(parsed) && parsed.useVariations === true;
         const m = await readSession(handle, sessionId);
         if (!alive) return;
         if (!m) {
@@ -114,6 +116,8 @@ function RunInterview() {
         setPlan(planned);
         setTransitionMode(mode);
         transitionModeRef.current = mode;
+        setUseVariations(variations);
+        useVariationsRef.current = variations;
         setMeta(m);
         metaRef.current = m;
       } catch (e) {
