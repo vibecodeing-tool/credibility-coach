@@ -86,6 +86,7 @@ function NewSessionPage() {
           rangeStart,
           rangeEnd: effectiveRangeEnd,
           transitionMode,
+          useVariations,
         },
       };
       await writeSessionMetadata(handle, sessionId, meta);
@@ -95,10 +96,12 @@ function NewSessionPage() {
         `cas:plan:${sessionId}`,
         JSON.stringify({
           transitionMode,
+          useVariations,
           questions: preview.map((q) => ({
             id: q.id,
             question: q.question,
             answer: q.answer,
+            alternativeQuestions: q.alternativeQuestions,
             readingTime: q.readingTime,
             answerTime: q.answerTime,
           })),
