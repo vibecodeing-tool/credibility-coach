@@ -226,6 +226,7 @@ function RunInterview() {
         const record: SessionQuestion = {
           questionId: q.id,
           questionText: q.question,
+          displayedQuestion: displayedQuestion !== q.question ? displayedQuestion : undefined,
           answer: q.answer,
           readingTime: q.readingTime,
           answerTime: q.answerTime,
