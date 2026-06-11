@@ -237,7 +237,7 @@ function NewSessionPage() {
           <CardTitle>Interview settings</CardTitle>
           <CardDescription>Choose how questions advance during the interview.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
           <RadioGroup
             value={transitionMode}
             onValueChange={(v) => setTransitionMode(v as "manual" | "automatic")}
@@ -262,6 +262,21 @@ function NewSessionPage() {
               </div>
             </label>
           </RadioGroup>
+
+          <label className="flex cursor-pointer items-start gap-3 rounded-md border p-3 has-[:checked]:border-primary has-[:checked]:bg-accent/40">
+            <input
+              type="checkbox"
+              checked={useVariations}
+              onChange={(e) => setUseVariations(e.target.checked)}
+              className="mt-0.5 h-4 w-4 accent-primary"
+            />
+            <div>
+              <div className="text-sm font-medium">Use random question variations</div>
+              <div className="text-xs text-muted-foreground">
+                When a question has alternative phrasings saved, the interview will randomly pick one. The master question is still used for history and reference answers.
+              </div>
+            </div>
+          </label>
         </CardContent>
       </Card>
 
