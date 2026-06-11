@@ -1,65 +1,83 @@
+# Alternative Question Variations
 
-# Manual question transitions + completion screen
+Add optional alternative phrasings for each question. Manage them in the Questions page, optionally use a random variation during interview sessions, and record which wording was actually shown in session history.
 
-After the answer timer ends and the recording saves, stop and show a confirmation screen with a **Next question** button instead of auto-advancing. Add a session-level setting to opt back into the old auto behavior.
+All data continues to live in the user's local data folder (`questions.json` + per-session `metadata.json`). No DB, no new dependencies.
 
-## 1. New setting on `/sessions/new`
+---
 
-File: `src/routes/sessions.new.tsx`
+## 1. Data model (`src/lib/types.ts`)
 
-- Add state `transitionMode: "manual" | "automatic"` (default `"manual"`).
-- New card "Interview settings" with a `RadioGroup`:
-  - **Manual (recommended)** — "Pause after each answer; you click Next question to continue."
-  - **Automatic** — "Move to the next question as soon as the recording is saved."
-- Persist alongside the existing plan in sessionStorage. Two options, pick (a):
-  - (a) Add `transitionMode` into the `cas:plan:${sessionId}` payload as a top-level field by switching the stored shape to `{ transitionMode, questions: [...] }`. The runner reads it back.
-  - Also extend `SessionMetadata["config"]` with `transitionMode` so it's recorded in the session.json for history.
+- `Question`: add `alternativeQuestions?: string[]` (optional, unlimited).
+- `SessionQuestion`: add `displayedQuestion?: string` (the wording actually shown to the user). `questionText` continues to hold the master question for backward compatibility.
+- `SessionMetadata.config`: add `useVariations?: boolean` (per-session toggle, default `false`).
 
-## 2. Runner: pause between questions
+All fields optional — old `questions.json` and old sessions keep working unchanged.
 
-File: `src/routes/sessions.run.$sessionId.tsx`
+---
 
-- Extend the `Phase` union with `"between"` (post-save, pre-next) and `"finished"` (after last save, pre-summary).
-- Read `transitionMode` from the parsed sessionStorage payload; store in a ref/state.
-- After `writeSessionMetadata` succeeds inside `runRecording`:
-  - If `transitionMode === "automatic"`: keep current behavior (advance index, set `"reading"`; or mark complete + `"done"` on last).
-  - If `transitionMode === "manual"`:
-    - On non-final question → `setPhase("between")`. Do NOT increment index yet; do NOT tear down the media stream.
-    - On final question → write `completed: true` metadata, `setPhase("finished")`. (Stream can be stopped here.)
-- Add a handler `handleNext()` that increments `index` and sets phase back to `"reading"` (kicks the existing state-machine effect, which will start a new countdown and recorder using the still-live stream).
-- The countdown effect already keys on `[phase, index, plan]`, so resetting to `"reading"` for the new index works without other changes. The webcam preview keeps showing the live stream during `"between"`.
+## 2. Question Management (`src/routes/questions.tsx`)
 
-## 3. Between-question UI
+**Card display (per question)**
+- Keep existing main question, badges, and "Show / Hide answer" collapsible.
+- Add a second `Collapsible`: **"Show variations" / "Hide variations"** (with `ChevronDown` rotate animation, same visual language as the answer toggle).
+  - Trigger only rendered when `alternativeQuestions?.length > 0`; otherwise show a muted "No variations" hint inside the row of badges (or just omit the toggle entirely — TBD, leaning omit to keep the card clean).
+  - Content: bullet list of variations inside the same `border bg-muted/30` panel used for the answer, with `whitespace-pre-wrap break-words` and `max-h-72 overflow-y-auto`.
+- Add a small badge `Variations: N` next to the existing `Has reference answer` badge when `N > 0`.
 
-In the main body grid, when `phase === "between"`:
+**Create/Edit dialog**
+- New section "Alternative question variations (optional)" below the reference answer field.
+- Renders one `Textarea` per variation with a trash icon button (`Trash2`, ghost variant) to remove it.
+- "Add variation" button (`Plus`, outline) appends an empty entry.
+- On save: trim each entry, drop empties; store `undefined` if the resulting array is empty.
+- No fixed limit. The list is scrollable inside the dialog if it grows tall (`max-h-64 overflow-y-auto`).
+- Mobile: each variation row stacks textarea + remove button; remove button stays reachable.
 
-- Replace the question/countdown column with a centered card:
-  - Big check icon (lucide `CheckCircle2`) in `text-primary`.
-  - Heading: **"Answer recorded successfully"**.
-  - Subtext: `Question {index + 1} of {plan.length} completed`.
-  - Primary button **"Next question"** with `ArrowRight` icon → calls `handleNext()`.
-  - Secondary ghost button **"Abort interview"** reusing the existing `setShowAbort(true)` flow.
-- Keep the webcam panel visible on the right so the user can see they're still on camera.
-- Top bar: hide the REC pill (already conditional on `recording`); progress bar value updates because index/phase changed.
+State held locally in the dialog's `editing` object (`editing.alternativeQuestions: string[]`).
 
-When `phase === "finished"`:
+---
 
-- Full-screen centered card:
-  - Heading **"Interview completed"**, subtext "All {plan.length} answers saved to your folder."
-  - Primary button **"View session summary"** → `navigate({ to: "/sessions/$sessionId", params: { sessionId } })`.
-  - Secondary link "Back to sessions" → `/sessions`.
-- Tear down media stream on entering this phase (call `cleanup()` once).
+## 3. Interview session setup (`src/routes/sessions.new.tsx`)
 
-The existing `phase === "done"` auto-navigates to `/sessions/complete/$sessionId`; keep that path for automatic mode and route manual mode through `"finished"` instead so the user sees the new screen before leaving.
+- Add a new `Switch` (or `Checkbox`) setting: **"Use random question variations"** — default off.
+  - Help text: "When a question has alternative phrasings saved, the interview will randomly pick one for each appearance. The master question is still used for scoring/review."
+- Persist into the session plan (sessionStorage) and into `metadata.json` as `config.useVariations`.
 
-## 4. Types
+---
 
-File: `src/lib/types.ts`
+## 4. Interview runner (`src/routes/sessions.run.$sessionId.tsx`)
 
-- Add `transitionMode?: "manual" | "automatic"` to `SessionMetadata["config"]`.
+- When advancing to a question:
+  - If `config.useVariations === true` and the question has `alternativeQuestions?.length > 0`, pick one uniformly at random from `[question, ...alternativeQuestions]` and use it as the on-screen text.
+  - Else display the master `question` as today.
+- Selection happens **once per question** (cached for that question slot) so re-renders don't re-pick.
+- On save (`writeSessionMetadata`), include `displayedQuestion` on the `SessionQuestion` entry (omit if equal to master, to keep files minimal — TBD; safe default: always include).
+
+Optionally extract the picker into `src/lib/interview/variation.ts` (`pickDisplayedQuestion(q, useVariations)`) for clarity and unit-testability.
+
+---
+
+## 5. Session review (`src/routes/sessions.$sessionId.tsx`)
+
+For each recorded answer:
+- Keep showing the master question as the card title (so history stays organized by topic).
+- If `displayedQuestion` exists and differs from `questionText`, show a small subline under the title:
+  > **Asked as:** "{displayedQuestion}"
+- Reference answer block stays unchanged.
+
+This satisfies "review the exact version you answered" without disrupting the existing layout.
+
+---
 
 ## Out of scope
+- No persistent user preference across sessions (per-session toggle only).
+- No weighting / "never repeat last wording" logic — strictly uniform random.
+- No edits to existing recordings or migration scripts.
 
-- No changes to storage layout, video file naming, or the session review/history pages.
-- No persistent user preference across sessions — the mode is per-session (chosen in `/sessions/new`, remembered for the duration of that run via sessionStorage + metadata).
-- No keyboard shortcut for "Next question" (can be added later).
+## Files touched
+- `src/lib/types.ts`
+- `src/routes/questions.tsx`
+- `src/routes/sessions.new.tsx`
+- `src/routes/sessions.run.$sessionId.tsx`
+- `src/routes/sessions.$sessionId.tsx`
+- (optional) `src/lib/interview/variation.ts`

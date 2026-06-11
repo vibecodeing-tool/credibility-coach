@@ -2,6 +2,7 @@ export interface Question {
   id: string;
   question: string;
   answer?: string;
+  alternativeQuestions?: string[];
   readingTime: number;
   answerTime: number;
   category?: string;
@@ -11,6 +12,7 @@ export interface Question {
 export interface SessionQuestion {
   questionId: string;
   questionText: string;
+  displayedQuestion?: string;
   answer?: string;
   readingTime: number;
   answerTime: number;
@@ -32,5 +34,6 @@ export interface SessionMetadata {
     rangeStart?: number;
     rangeEnd?: number;
     transitionMode?: "manual" | "automatic";
+    useVariations?: boolean;
   };
 }

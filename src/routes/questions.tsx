@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Plus, Pencil, Trash2, Search, ChevronDown } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, ChevronDown, Shuffle } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { useQuestions } from "@/hooks/use-questions";
@@ -56,6 +56,7 @@ function QuestionsPage() {
   const [open, setOpen] = useState(false);
   const [deleting, setDeleting] = useState<Question | null>(null);
   const [openAnswers, setOpenAnswers] = useState<Record<string, boolean>>({});
+  const [openVariations, setOpenVariations] = useState<Record<string, boolean>>({});
 
   const categories = useMemo(() => {
     const set = new Set<string>();
@@ -77,6 +78,7 @@ function QuestionsPage() {
       id: newId(),
       question: "",
       answer: "",
+      alternativeQuestions: [],
       readingTime: 15,
       answerTime: 60,
       category: "",
@@ -86,7 +88,7 @@ function QuestionsPage() {
   };
 
   const openEdit = (q: Question) => {
-    setEditing({ ...q });
+    setEditing({ ...q, alternativeQuestions: q.alternativeQuestions ? [...q.alternativeQuestions] : [] });
     setOpen(true);
   };
 
@@ -97,10 +99,14 @@ function QuestionsPage() {
       return;
     }
     try {
+      const cleanedVariations = (editing.alternativeQuestions ?? [])
+        .map((v) => v.trim())
+        .filter((v) => v.length > 0);
       await upsert({
         ...editing,
         category: editing.category?.trim() || undefined,
         answer: editing.answer?.trim() ? editing.answer : undefined,
+        alternativeQuestions: cleanedVariations.length > 0 ? cleanedVariations : undefined,
       });
       toast.success("Question saved");
       setOpen(false);
@@ -176,6 +182,12 @@ function QuestionsPage() {
                     <Badge variant="outline">Read {q.readingTime}s</Badge>
                     <Badge variant="outline">Answer {q.answerTime}s</Badge>
                     {q.answer?.trim() && <Badge variant="outline">Has reference answer</Badge>}
+                    {q.alternativeQuestions && q.alternativeQuestions.length > 0 && (
+                      <Badge variant="outline">
+                        <Shuffle className="mr-1 h-3 w-3" />
+                        {q.alternativeQuestions.length} variation{q.alternativeQuestions.length === 1 ? "" : "s"}
+                      </Badge>
+                    )}
                   </div>
                 </div>
                 <div className="flex gap-1">
@@ -216,13 +228,42 @@ function QuestionsPage() {
                   )}
                 </CollapsibleContent>
               </Collapsible>
+              {q.alternativeQuestions && q.alternativeQuestions.length > 0 && (
+                <Collapsible
+                  open={!!openVariations[q.id]}
+                  onOpenChange={(o) => setOpenVariations((s) => ({ ...s, [q.id]: o }))}
+                >
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="mt-1 h-8 px-2 text-xs text-muted-foreground">
+                      <ChevronDown
+                        className={`mr-1 h-3.5 w-3.5 transition-transform ${openVariations[q.id] ? "rotate-180" : ""}`}
+                      />
+                      {openVariations[q.id] ? "Hide variations" : "Show variations"}
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-2">
+                    <div className="max-h-72 overflow-y-auto rounded-md border bg-muted/30 p-3 text-sm leading-relaxed">
+                      <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        Alternative question variations
+                      </div>
+                      <ul className="list-disc space-y-1.5 pl-5">
+                        {q.alternativeQuestions.map((v, i) => (
+                          <li key={i} className="whitespace-pre-wrap break-words">
+                            {v}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              )}
             </Card>
           ))}
         </div>
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing && questions.some((q) => q.id === editing.id) ? "Edit question" : "New question"}</DialogTitle>
             <DialogDescription>
@@ -287,6 +328,63 @@ function QuestionsPage() {
                 />
                 <p className="text-xs text-muted-foreground">
                   Hidden during interviews. Visible only in Session History → Review.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Alternative question variations (optional)</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setEditing({
+                        ...editing,
+                        alternativeQuestions: [...(editing.alternativeQuestions ?? []), ""],
+                      })
+                    }
+                  >
+                    <Plus className="mr-1 h-3.5 w-3.5" /> Add variation
+                  </Button>
+                </div>
+                {(editing.alternativeQuestions?.length ?? 0) === 0 ? (
+                  <p className="rounded-md border border-dashed p-3 text-xs italic text-muted-foreground">
+                    No variations yet. Add alternative phrasings of the same question.
+                  </p>
+                ) : (
+                  <div className="max-h-64 space-y-2 overflow-y-auto rounded-md border bg-muted/20 p-2">
+                    {editing.alternativeQuestions!.map((v, i) => (
+                      <div key={i} className="flex items-start gap-2">
+                        <Textarea
+                          rows={2}
+                          value={v}
+                          onChange={(e) => {
+                            const next = [...editing.alternativeQuestions!];
+                            next[i] = e.target.value;
+                            setEditing({ ...editing, alternativeQuestions: next });
+                          }}
+                          placeholder={`Variation ${i + 1}`}
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="mt-1 text-destructive hover:text-destructive"
+                          onClick={() => {
+                            const next = editing.alternativeQuestions!.filter((_, j) => j !== i);
+                            setEditing({ ...editing, alternativeQuestions: next });
+                          }}
+                          aria-label="Remove variation"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  When enabled in a session, the interview can randomly pick one of these phrasings instead of the main question.
                 </p>
               </div>
             </div>

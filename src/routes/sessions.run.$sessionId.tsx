@@ -28,6 +28,7 @@ interface PlannedQuestion {
   id: string;
   question: string;
   answer?: string;
+  alternativeQuestions?: string[];
   readingTime: number;
   answerTime: number;
 }
@@ -64,6 +65,8 @@ function RunInterview() {
 
   const [plan, setPlan] = useState<PlannedQuestion[]>([]);
   const [transitionMode, setTransitionMode] = useState<TransitionMode>("manual");
+  const [useVariations, setUseVariations] = useState(false);
+  const [displayedQuestions, setDisplayedQuestions] = useState<Record<number, string>>({});
   const [meta, setMeta] = useState<SessionMetadata | null>(null);
   const [index, setIndex] = useState(0);
   const [phase, setPhase] = useState<Phase>("preparing");
@@ -79,6 +82,8 @@ function RunInterview() {
   const metaRef = useRef<SessionMetadata | null>(null);
   const startTimeRef = useRef<number>(0);
   const transitionModeRef = useRef<TransitionMode>("manual");
+  const useVariationsRef = useRef(false);
+  const displayedQuestionsRef = useRef<Record<number, string>>({});
 
   // ---- Load plan + metadata ----
   useEffect(() => {
@@ -99,6 +104,8 @@ function RunInterview() {
           !Array.isArray(parsed) && parsed.transitionMode === "automatic"
             ? "automatic"
             : "manual";
+        const variations: boolean =
+          !Array.isArray(parsed) && parsed.useVariations === true;
         const m = await readSession(handle, sessionId);
         if (!alive) return;
         if (!m) {
@@ -109,6 +116,8 @@ function RunInterview() {
         setPlan(planned);
         setTransitionMode(mode);
         transitionModeRef.current = mode;
+        setUseVariations(variations);
+        useVariationsRef.current = variations;
         setMeta(m);
         metaRef.current = m;
       } catch (e) {
@@ -165,8 +174,20 @@ function RunInterview() {
     if (!plan[index]) return;
     const signal = abortRef.current.signal;
     let cancelled = false;
-
     const q = plan[index];
+
+    // Lock in displayed question for this index on first entry.
+    if (displayedQuestionsRef.current[index] === undefined) {
+      let displayed = q.question;
+      if (useVariationsRef.current && q.alternativeQuestions && q.alternativeQuestions.length > 0) {
+        const pool = [q.question, ...q.alternativeQuestions];
+        displayed = pool[Math.floor(Math.random() * pool.length)];
+      }
+      displayedQuestionsRef.current = { ...displayedQuestionsRef.current, [index]: displayed };
+      setDisplayedQuestions((s) => ({ ...s, [index]: displayed }));
+    }
+    const displayedQuestion = displayedQuestionsRef.current[index] ?? q.question;
+
 
     async function runReading() {
       await countdown(q.readingTime, setSecondsLeft, signal);
@@ -205,6 +226,7 @@ function RunInterview() {
         const record: SessionQuestion = {
           questionId: q.id,
           questionText: q.question,
+          displayedQuestion: displayedQuestion !== q.question ? displayedQuestion : undefined,
           answer: q.answer,
           readingTime: q.readingTime,
           answerTime: q.answerTime,
@@ -467,7 +489,7 @@ function RunInterview() {
                           : ""}
                 </div>
                 <h2 className="mt-4 font-display text-2xl md:text-4xl font-semibold leading-tight max-w-3xl">
-                  {current.question}
+                  {displayedQuestions[index] ?? current.question}
                 </h2>
               </div>
 
