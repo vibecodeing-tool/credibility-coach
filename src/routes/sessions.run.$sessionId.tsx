@@ -489,7 +489,7 @@ function RunInterview() {
                           : ""}
                 </div>
                 <h2 className="mt-4 font-display text-2xl md:text-4xl font-semibold leading-tight max-w-3xl">
-                  {current.question}
+                  {displayedQuestions[index] ?? current.question}
                 </h2>
               </div>
 
