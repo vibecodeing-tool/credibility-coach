@@ -182,6 +182,12 @@ function QuestionsPage() {
                     <Badge variant="outline">Read {q.readingTime}s</Badge>
                     <Badge variant="outline">Answer {q.answerTime}s</Badge>
                     {q.answer?.trim() && <Badge variant="outline">Has reference answer</Badge>}
+                    {q.alternativeQuestions && q.alternativeQuestions.length > 0 && (
+                      <Badge variant="outline">
+                        <Shuffle className="mr-1 h-3 w-3" />
+                        {q.alternativeQuestions.length} variation{q.alternativeQuestions.length === 1 ? "" : "s"}
+                      </Badge>
+                    )}
                   </div>
                 </div>
                 <div className="flex gap-1">
