@@ -191,6 +191,12 @@ function QuestionsPage() {
                   </div>
                 </div>
                 <div className="flex gap-1">
+                  <Button asChild size="sm" variant="outline" className="h-8">
+                    <Link to="/drill" search={{ questionId: q.id, mode: "auto" }}>
+                      <Mic className="mr-1.5 h-3.5 w-3.5" />
+                      Practice
+                    </Link>
+                  </Button>
                   <Button size="icon" variant="ghost" onClick={() => openEdit(q)}>
                     <Pencil className="h-4 w-4" />
                   </Button>
