@@ -99,10 +99,14 @@ function QuestionsPage() {
       return;
     }
     try {
+      const cleanedVariations = (editing.alternativeQuestions ?? [])
+        .map((v) => v.trim())
+        .filter((v) => v.length > 0);
       await upsert({
         ...editing,
         category: editing.category?.trim() || undefined,
         answer: editing.answer?.trim() ? editing.answer : undefined,
+        alternativeQuestions: cleanedVariations.length > 0 ? cleanedVariations : undefined,
       });
       toast.success("Question saved");
       setOpen(false);
