@@ -115,6 +115,11 @@ function ReviewSession() {
                   <span className="mr-2 font-mono text-muted-foreground">Q{i + 1}</span>
                   {q.questionText}
                 </CardTitle>
+                {q.displayedQuestion && q.displayedQuestion !== q.questionText && (
+                  <p className="text-sm italic text-muted-foreground">
+                    <span className="font-medium not-italic">Asked as:</span> "{q.displayedQuestion}"
+                  </p>
+                )}
                 <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                   <span>Recorded {q.recordingDuration}s</span>
                   <span>·</span>
