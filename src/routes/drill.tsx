@@ -146,20 +146,44 @@ function DrillPage() {
     if (!question) return;
     setError(null);
     clearRecording();
+    resumeAudio();
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: true,
       });
       streamRef.current = stream;
+      // 3-2-1 pre-roll with ticks, then begin recording.
+      setPrepCount(3);
+      setPhase("prep");
+      playTick();
+      await new Promise<void>((resolve) => {
+        let n = 3;
+        prepTimerRef.current = window.setInterval(() => {
+          n -= 1;
+          if (n > 0) {
+            setPrepCount(n);
+            playTick();
+          } else {
+            if (prepTimerRef.current) {
+              window.clearInterval(prepTimerRef.current);
+              prepTimerRef.current = null;
+            }
+            resolve();
+          }
+        }, 1000);
+      });
+      // Stream may have been cancelled during prep.
+      if (!streamRef.current) return;
       const mime = pickMime();
-      const rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+      const rec = new MediaRecorder(streamRef.current, mime ? { mimeType: mime } : undefined);
       recorderRef.current = rec;
       chunksRef.current = [];
       rec.ondataavailable = (e) => {
         if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
       };
       rec.onstop = () => {
+        playEnd();
         const blob = new Blob(chunksRef.current, { type: mime || "video/webm" });
         const url = URL.createObjectURL(blob);
         urlRef.current = url;
@@ -167,6 +191,7 @@ function DrillPage() {
         stopStream();
         setPhase("playback");
       };
+      playStart();
       rec.start(1000);
       startedAtRef.current = Date.now();
       autoStopAtRef.current = shouldAutoStop() && question.answerTime
@@ -185,6 +210,7 @@ function DrillPage() {
     } catch (e) {
       setError("Camera/microphone access denied: " + (e as Error).message);
       stopStream();
+      setPhase("select");
     }
   }
 
