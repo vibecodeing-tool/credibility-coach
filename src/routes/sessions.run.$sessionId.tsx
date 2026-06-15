@@ -149,6 +149,8 @@ function RunInterview() {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
+        // Unlock WebAudio cues while we're still close to the user gesture.
+        resumeAudio();
         startTimeRef.current = Date.now();
         setPhase("reading");
       } catch (e) {
