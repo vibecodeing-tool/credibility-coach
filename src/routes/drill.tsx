@@ -85,6 +85,7 @@ function DrillPage() {
   const startedAtRef = useRef<number>(0);
   const urlRef = useRef<string | null>(null);
   const autoStopAtRef = useRef<number | null>(null);
+  const prepTimerRef = useRef<number | null>(null);
 
   const question: Question | undefined = questions.find((q) => q.id === questionId);
   const hasTarget = !!(question?.answerTime && question.answerTime > 0);
