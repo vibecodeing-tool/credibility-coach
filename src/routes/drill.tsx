@@ -420,6 +420,39 @@ function DrillPage() {
         </Card>
       )}
 
+      {phase === "prep" && question && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="leading-snug">{question.question}</CardTitle>
+            <CardDescription>Get ready — recording starts in…</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="relative aspect-video overflow-hidden rounded-lg bg-black">
+              <video
+                ref={videoRef}
+                autoPlay
+                muted
+                playsInline
+                className="h-full w-full object-cover [transform:scaleX(-1)]"
+              />
+              <div className="absolute inset-0 grid place-items-center bg-black/40">
+                <div
+                  key={prepCount}
+                  className="font-mono text-[9rem] font-bold leading-none text-white drop-shadow-lg animate-in fade-in zoom-in duration-300"
+                >
+                  {prepCount}
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 flex justify-end">
+              <Button variant="ghost" onClick={cancelRecording}>
+                Cancel
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {phase === "recording" && question && (
         <Card>
           <CardHeader>
