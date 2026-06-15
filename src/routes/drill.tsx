@@ -75,6 +75,7 @@ function DrillPage() {
   const [playbackUrl, setPlaybackUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [autoStopped, setAutoStopped] = useState(false);
+  const [prepCount, setPrepCount] = useState(3);
 
   const streamRef = useRef<MediaStream | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
