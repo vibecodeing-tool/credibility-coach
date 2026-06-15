@@ -227,6 +227,7 @@ function RunInterview() {
       }
       if (rec.state !== "inactive") rec.stop();
       await stopped;
+      playEnd();
       const recordingDuration = Math.round((Date.now() - startedAt) / 1000);
       const blob = new Blob(chunks, { type: mime || "video/webm" });
       if (cancelled) return;
