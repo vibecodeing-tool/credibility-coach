@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import type { Question } from "@/lib/types";
+import { resumeAudio, playTick, playStart, playEnd } from "@/lib/audio/cues";
 
 const searchSchema = z.object({
   questionId: z.string().optional(),
