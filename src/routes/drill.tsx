@@ -111,7 +111,7 @@ function DrillPage() {
   }, []);
 
   useEffect(() => {
-    if (phase === "recording" && videoRef.current && streamRef.current) {
+    if ((phase === "recording" || phase === "prep") && videoRef.current && streamRef.current) {
       videoRef.current.srcObject = streamRef.current;
     }
   }, [phase]);
