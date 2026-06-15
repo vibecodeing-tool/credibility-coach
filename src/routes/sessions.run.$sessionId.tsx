@@ -193,8 +193,16 @@ function RunInterview() {
 
 
     async function runReading() {
-      await countdown(q.readingTime, setSecondsLeft, signal);
+      await countdown(
+        q.readingTime,
+        (n) => {
+          setSecondsLeft(n);
+          if (n >= 1 && n <= 3) playTick();
+        },
+        signal,
+      );
       if (cancelled) return;
+      playStart();
       setPhase("recording");
     }
 
