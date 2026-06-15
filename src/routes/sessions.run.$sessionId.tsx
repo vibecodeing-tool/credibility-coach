@@ -18,6 +18,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { SessionMetadata, SessionQuestion } from "@/lib/types";
+import { resumeAudio, playTick, playStart, playEnd } from "@/lib/audio/cues";
 
 export const Route = createFileRoute("/sessions/run/$sessionId")({
   head: () => ({ meta: [{ title: "Interview in progress" }] }),
