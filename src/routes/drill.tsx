@@ -106,6 +106,7 @@ function DrillPage() {
     return () => {
       stopStream();
       if (tickRef.current) window.clearInterval(tickRef.current);
+      if (prepTimerRef.current) window.clearInterval(prepTimerRef.current);
       if (urlRef.current) URL.revokeObjectURL(urlRef.current);
     };
   }, []);
