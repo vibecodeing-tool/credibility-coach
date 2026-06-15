@@ -1,62 +1,48 @@
-# Speaking Drill Mode (Quick Practice)
+## Recording Countdown & Alert Sounds
 
-A lightweight practice flow for a single question — stopwatch + temporary in-memory recording, nothing written to disk.
+Add real-world-style audio cues around recording start/stop in both the **Speaking Drill** (`/drill`) and **Interview Session** (`/sessions/run/$sessionId`) flows.
 
-## New route
+### Sound cues
 
-`src/routes/drill.tsx` → `/drill`
+| Moment | Sound |
+|---|---|
+| Last 3 seconds of reading/prep countdown (3, 2, 1) | Short high "tick" beep (≈880 Hz, 120 ms) |
+| Recording starts | Longer confirm beep (≈1200 Hz, 250 ms) |
+| Recording ends (auto-stop OR manual stop) | Lower end beep (≈500 Hz, 350 ms) |
 
-Added to the sidebar nav (`src/components/app-sidebar.tsx`) as "Speaking Drill" with a `Timer`/`Mic` icon, beside Questions and Sessions.
+Mirrors common camera/recording apps (e.g. Loom, iOS camera self-timer).
 
-## UI flow
+### Implementation
 
-Single page, three states driven by local component state — no router state, no persistence.
+1. **New helper** `src/lib/audio/cues.ts`
+   - Tiny WebAudio module — no asset files, no extra deps.
+   - Lazily creates one shared `AudioContext` on first use (must be triggered from a user gesture, which both flows already have: "Start" buttons).
+   - Exports `playTick()`, `playStart()`, `playEnd()` using `OscillatorNode` + `GainNode` with a short attack/decay envelope so they sound like clean beeps, not clicks.
+   - Exports `resumeAudio()` to unlock the context on the first click.
+   - Safe no-op on SSR / when `AudioContext` is unavailable.
 
-**1. Select**
+2. **`src/routes/sessions.run.$sessionId.tsx`**
+   - Call `resumeAudio()` inside the existing "Start" / begin handler.
+   - In the reading-phase countdown loop, call `playTick()` when `secondsLeft` becomes 3, 2, or 1.
+   - Call `playStart()` immediately before `setPhase("recording")` and `recorder.start()`.
+   - Call `playEnd()` when the recorder stops — both on auto-stop (answer timer hits 0) and on manual "Next/Stop" click, in one place inside the existing stop helper to avoid double-firing.
 
-- Question picker: searchable `Select` (or simple list with filter input) populated from `useQuestions()`.
-- Shows question text, category badge, and `Target: Xs` if `answerTime` is set.
-- Primary button: **Start Practice** (disabled until a question is picked).
+3. **`src/routes/drill.tsx`**
+   - Same wiring, adapted to the drill state machine:
+     - On "Start Practice" click → `resumeAudio()`.
+     - Drill currently starts recording immediately (no reading countdown). Add an optional **3-2-1 pre-roll** before `MediaRecorder.start()`:
+       - Show a large `3 → 2 → 1` overlay on the webcam preview, 1 second per number, playing `playTick()` each step.
+       - Then `playStart()` and begin recording + stopwatch.
+     - On stop (manual, auto-stop in AUTO/TIMED modes, or cancel-then-finish) → `playEnd()` once.
+   - Pre-roll applies to all three modes (AUTO / FREE / TIMED).
 
-**2. Recording**
+### Out of scope
 
-- Large displayed question at top.
-- Live MM:SS stopwatch (updates every 100ms, rendered to seconds).
-- Red "● Recording" pill (reuses the recording-dot style from the runner).
-- Webcam preview (mirrored, same styling as `sessions.run`).
-- Controls: **Stop Recording**, **Cancel**.
-- If `answerTime` is set, show a subtle "Target: 60s" label next to the stopwatch. We do NOT auto-stop — the user controls duration.
+- No user setting to mute sounds (can be added later if requested).
+- No bundled audio files — synthesized so there's nothing to download or ship.
+- No changes to session metadata, types, or persisted recordings.
 
-**3. Playback**
+### Files
 
-- `<video controls>` bound to a `URL.createObjectURL(blob)` for the just-captured webm.
-- Stats row:
-  - "Your attempt: 42s"
-  - "Target: 60s" (only if `answerTime` set), plus a small delta chip ("-18s under" / "+5s over").
-- Controls: **Retry Practice** (revokes the object URL, clears blob, resets stopwatch, returns to Select state with the same question pre-selected), **Pick a different question** (returns to Select cleared).
-
-## Temporary-only recording
-
-- `MediaRecorder` chunks held in a `useRef<Blob[]>`; final `Blob` kept in component state.
-- Object URL stored in a ref and revoked on: new attempt, question change, unmount.
-- No calls into `src/lib/fs/store.ts`, no `writeBlob`, no metadata writes. Nothing touches the session folder.
-- Each new attempt overwrites the previous blob and revokes the prior object URL — only one recording exists at a time.
-
-## Reused building blocks
-
-- `useQuestions()` for the question list.
-- `pickMime()` + `getUserMedia` pattern copied (small, local) from `sessions.run.$sessionId.tsx` — kept inline rather than extracted, to avoid touching the runner.
-- Existing shadcn components: `Button`, `Select`, `Card`, `Badge`.
-- Recording dot styling already exists in `styles.css` (`.recording-dot`, `--recording`).
-
-## Files touched
-
-- **New**: `src/routes/drill.tsx`
-- **Edited**: `src/components/app-sidebar.tsx` (add nav link)
-
-## Out of scope
-
-- Not saved to sessions, history, or any JSON metadata.
-- No auto-stop on target time.
-- No drill-mode analytics / streaks.
-- No changes to existing session runner, question manager, or types.
+- **Create:** `src/lib/audio/cues.ts`
+- **Edit:** `src/routes/sessions.run.$sessionId.tsx`, `src/routes/drill.tsx`
