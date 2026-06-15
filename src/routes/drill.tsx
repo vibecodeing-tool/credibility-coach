@@ -38,7 +38,7 @@ export const Route = createFileRoute("/drill")({
   component: DrillPage,
 });
 
-type Phase = "select" | "recording" | "playback";
+type Phase = "select" | "prep" | "recording" | "playback";
 type DrillMode = "auto" | "free" | "timed";
 
 function pickMime(): string {
