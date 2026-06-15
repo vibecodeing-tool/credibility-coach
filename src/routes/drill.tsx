@@ -236,6 +236,10 @@ function DrillPage() {
       window.clearInterval(tickRef.current);
       tickRef.current = null;
     }
+    if (prepTimerRef.current) {
+      window.clearInterval(prepTimerRef.current);
+      prepTimerRef.current = null;
+    }
     try {
       if (recorderRef.current && recorderRef.current.state !== "inactive") {
         recorderRef.current.onstop = null;
