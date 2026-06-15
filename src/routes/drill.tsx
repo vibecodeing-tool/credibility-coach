@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import type { Question } from "@/lib/types";
+import { resumeAudio, playTick, playStart, playEnd } from "@/lib/audio/cues";
 
 const searchSchema = z.object({
   questionId: z.string().optional(),
@@ -37,7 +38,7 @@ export const Route = createFileRoute("/drill")({
   component: DrillPage,
 });
 
-type Phase = "select" | "recording" | "playback";
+type Phase = "select" | "prep" | "recording" | "playback";
 type DrillMode = "auto" | "free" | "timed";
 
 function pickMime(): string {
@@ -74,6 +75,7 @@ function DrillPage() {
   const [playbackUrl, setPlaybackUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [autoStopped, setAutoStopped] = useState(false);
+  const [prepCount, setPrepCount] = useState(3);
 
   const streamRef = useRef<MediaStream | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
@@ -83,6 +85,7 @@ function DrillPage() {
   const startedAtRef = useRef<number>(0);
   const urlRef = useRef<string | null>(null);
   const autoStopAtRef = useRef<number | null>(null);
+  const prepTimerRef = useRef<number | null>(null);
 
   const question: Question | undefined = questions.find((q) => q.id === questionId);
   const hasTarget = !!(question?.answerTime && question.answerTime > 0);
@@ -103,12 +106,13 @@ function DrillPage() {
     return () => {
       stopStream();
       if (tickRef.current) window.clearInterval(tickRef.current);
+      if (prepTimerRef.current) window.clearInterval(prepTimerRef.current);
       if (urlRef.current) URL.revokeObjectURL(urlRef.current);
     };
   }, []);
 
   useEffect(() => {
-    if (phase === "recording" && videoRef.current && streamRef.current) {
+    if ((phase === "recording" || phase === "prep") && videoRef.current && streamRef.current) {
       videoRef.current.srcObject = streamRef.current;
     }
   }, [phase]);
@@ -142,20 +146,44 @@ function DrillPage() {
     if (!question) return;
     setError(null);
     clearRecording();
+    resumeAudio();
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: true,
       });
       streamRef.current = stream;
+      // 3-2-1 pre-roll with ticks, then begin recording.
+      setPrepCount(3);
+      setPhase("prep");
+      playTick();
+      await new Promise<void>((resolve) => {
+        let n = 3;
+        prepTimerRef.current = window.setInterval(() => {
+          n -= 1;
+          if (n > 0) {
+            setPrepCount(n);
+            playTick();
+          } else {
+            if (prepTimerRef.current) {
+              window.clearInterval(prepTimerRef.current);
+              prepTimerRef.current = null;
+            }
+            resolve();
+          }
+        }, 1000);
+      });
+      // Stream may have been cancelled during prep.
+      if (!streamRef.current) return;
       const mime = pickMime();
-      const rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+      const rec = new MediaRecorder(streamRef.current, mime ? { mimeType: mime } : undefined);
       recorderRef.current = rec;
       chunksRef.current = [];
       rec.ondataavailable = (e) => {
         if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
       };
       rec.onstop = () => {
+        playEnd();
         const blob = new Blob(chunksRef.current, { type: mime || "video/webm" });
         const url = URL.createObjectURL(blob);
         urlRef.current = url;
@@ -163,6 +191,7 @@ function DrillPage() {
         stopStream();
         setPhase("playback");
       };
+      playStart();
       rec.start(1000);
       startedAtRef.current = Date.now();
       autoStopAtRef.current = shouldAutoStop() && question.answerTime
@@ -181,6 +210,7 @@ function DrillPage() {
     } catch (e) {
       setError("Camera/microphone access denied: " + (e as Error).message);
       stopStream();
+      setPhase("select");
     }
   }
 
@@ -205,6 +235,10 @@ function DrillPage() {
     if (tickRef.current) {
       window.clearInterval(tickRef.current);
       tickRef.current = null;
+    }
+    if (prepTimerRef.current) {
+      window.clearInterval(prepTimerRef.current);
+      prepTimerRef.current = null;
     }
     try {
       if (recorderRef.current && recorderRef.current.state !== "inactive") {
@@ -382,6 +416,39 @@ function DrillPage() {
               <Mic className="mr-2 h-4 w-4" />
               Start Practice
             </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {phase === "prep" && question && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="leading-snug">{question.question}</CardTitle>
+            <CardDescription>Get ready — recording starts in…</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="relative aspect-video overflow-hidden rounded-lg bg-black">
+              <video
+                ref={videoRef}
+                autoPlay
+                muted
+                playsInline
+                className="h-full w-full object-cover [transform:scaleX(-1)]"
+              />
+              <div className="absolute inset-0 grid place-items-center bg-black/40">
+                <div
+                  key={prepCount}
+                  className="font-mono text-[9rem] font-bold leading-none text-white drop-shadow-lg animate-in fade-in zoom-in duration-300"
+                >
+                  {prepCount}
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 flex justify-end">
+              <Button variant="ghost" onClick={cancelRecording}>
+                Cancel
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}

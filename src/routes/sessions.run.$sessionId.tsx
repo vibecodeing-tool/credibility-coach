@@ -18,6 +18,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { SessionMetadata, SessionQuestion } from "@/lib/types";
+import { resumeAudio, playTick, playStart, playEnd } from "@/lib/audio/cues";
 
 export const Route = createFileRoute("/sessions/run/$sessionId")({
   head: () => ({ meta: [{ title: "Interview in progress" }] }),
@@ -148,6 +149,8 @@ function RunInterview() {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
+        // Unlock WebAudio cues while we're still close to the user gesture.
+        resumeAudio();
         startTimeRef.current = Date.now();
         setPhase("reading");
       } catch (e) {
@@ -190,8 +193,16 @@ function RunInterview() {
 
 
     async function runReading() {
-      await countdown(q.readingTime, setSecondsLeft, signal);
+      await countdown(
+        q.readingTime,
+        (n) => {
+          setSecondsLeft(n);
+          if (n >= 1 && n <= 3) playTick();
+        },
+        signal,
+      );
       if (cancelled) return;
+      playStart();
       setPhase("recording");
     }
 
@@ -216,6 +227,7 @@ function RunInterview() {
       }
       if (rec.state !== "inactive") rec.stop();
       await stopped;
+      playEnd();
       const recordingDuration = Math.round((Date.now() - startedAt) / 1000);
       const blob = new Blob(chunks, { type: mime || "video/webm" });
       if (cancelled) return;
