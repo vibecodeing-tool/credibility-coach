@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Timer, Mic, Square, RotateCcw, Play, CircleDot, Check, ChevronsUpDown, Search } from "lucide-react";
+import { Timer, Mic, Square, RotateCcw, Play, CircleDot, Check, ChevronsUpDown, Search, Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
 import { useQuestions } from "@/hooks/use-questions";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
