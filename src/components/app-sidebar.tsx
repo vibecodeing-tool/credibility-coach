@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useFsRoot } from "@/hooks/use-fs-root";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const nav = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard, exact: true },
@@ -63,6 +64,9 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
+        <div className="px-2 pb-1">
+          <ThemeToggle className="h-8 w-full justify-start px-2 text-xs" />
+        </div>
         {handle && (
           <div className="px-2 pb-2 group-data-[collapsible=icon]:hidden">
             <div className="rounded-md border bg-card p-2 text-xs">

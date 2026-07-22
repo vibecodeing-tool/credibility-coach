@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { FsRootProvider } from "@/hooks/use-fs-root";
 import { AppLayout } from "@/components/app-layout";
 import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "@/components/theme-provider";
 
 function NotFoundComponent() {
   return (
@@ -121,13 +122,15 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
-    <QueryClientProvider client={queryClient}>
-      <FsRootProvider>
-        <AppLayout>
-          <Outlet />
-        </AppLayout>
-        <Toaster richColors position="top-right" />
-      </FsRootProvider>
-    </QueryClientProvider>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <FsRootProvider>
+          <AppLayout>
+            <Outlet />
+          </AppLayout>
+          <Toaster richColors position="top-right" />
+        </FsRootProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
