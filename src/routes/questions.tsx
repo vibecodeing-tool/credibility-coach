@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Plus, Pencil, Trash2, Search, ChevronDown, Shuffle, Mic } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, ChevronDown, Shuffle, Mic, BookOpen } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { useQuestions } from "@/hooks/use-questions";
@@ -57,6 +57,7 @@ function QuestionsPage() {
   const [deleting, setDeleting] = useState<Question | null>(null);
   const [openAnswers, setOpenAnswers] = useState<Record<string, boolean>>({});
   const [openVariations, setOpenVariations] = useState<Record<string, boolean>>({});
+  const [reading, setReading] = useState<Question | null>(null);
 
   const categories = useMemo(() => {
     const set = new Set<string>();
@@ -210,30 +211,43 @@ function QuestionsPage() {
                   </Button>
                 </div>
               </div>
-              <Collapsible
-                open={!!openAnswers[q.id]}
-                onOpenChange={(o) => setOpenAnswers((s) => ({ ...s, [q.id]: o }))}
-              >
-                <CollapsibleTrigger asChild>
-                  <Button variant="ghost" size="sm" className="mt-3 h-8 px-2 text-xs text-muted-foreground">
-                    <ChevronDown
-                      className={`mr-1 h-3.5 w-3.5 transition-transform ${openAnswers[q.id] ? "rotate-180" : ""}`}
-                    />
-                    {openAnswers[q.id] ? "Hide answer" : "Show answer"}
+              <div className="mt-3 flex flex-wrap items-center gap-1">
+                <Collapsible
+                  open={!!openAnswers[q.id]}
+                  onOpenChange={(o) => setOpenAnswers((s) => ({ ...s, [q.id]: o }))}
+                >
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground">
+                      <ChevronDown
+                        className={`mr-1 h-3.5 w-3.5 transition-transform ${openAnswers[q.id] ? "rotate-180" : ""}`}
+                      />
+                      {openAnswers[q.id] ? "Hide answer" : "Show answer"}
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-2 basis-full">
+                    {q.answer?.trim() ? (
+                      <div className="max-h-72 overflow-y-auto whitespace-pre-wrap break-words rounded-md border bg-muted/30 p-3 text-sm leading-relaxed">
+                        {q.answer}
+                      </div>
+                    ) : (
+                      <p className="rounded-md border border-dashed p-3 text-xs italic text-muted-foreground">
+                        No reference answer available.
+                      </p>
+                    )}
+                  </CollapsibleContent>
+                </Collapsible>
+                {q.answer?.trim() && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2 text-xs text-muted-foreground"
+                    onClick={() => setReading(q)}
+                  >
+                    <BookOpen className="mr-1 h-3.5 w-3.5" />
+                    Read
                   </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="mt-2">
-                  {q.answer?.trim() ? (
-                    <div className="max-h-72 overflow-y-auto whitespace-pre-wrap break-words rounded-md border bg-muted/30 p-3 text-sm leading-relaxed">
-                      {q.answer}
-                    </div>
-                  ) : (
-                    <p className="rounded-md border border-dashed p-3 text-xs italic text-muted-foreground">
-                      No reference answer available.
-                    </p>
-                  )}
-                </CollapsibleContent>
-              </Collapsible>
+                )}
+              </div>
               {q.alternativeQuestions && q.alternativeQuestions.length > 0 && (
                 <Collapsible
                   open={!!openVariations[q.id]}
