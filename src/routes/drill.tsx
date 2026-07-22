@@ -409,6 +409,28 @@ function DrillPage() {
                   )}
                   <Badge>{mode === "auto" ? "AUTO" : mode === "free" ? "FREE" : "TIMED"}</Badge>
                 </div>
+                <div className="border-t pt-3">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowAnswer((v) => !v)}
+                    className="h-8 px-2 text-xs"
+                  >
+                    {showAnswer ? (
+                      <><EyeOff className="mr-1.5 h-3.5 w-3.5" /> Hide reference answer</>
+                    ) : (
+                      <><Eye className="mr-1.5 h-3.5 w-3.5" /> Show reference answer</>
+                    )}
+                  </Button>
+                  {showAnswer && (
+                    <div className="mt-2 rounded-md border bg-background p-3 text-sm whitespace-pre-wrap break-words">
+                      {question.answer?.trim() ? question.answer : (
+                        <span className="text-muted-foreground italic">No reference answer available.</span>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
