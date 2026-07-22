@@ -1,48 +1,33 @@
-## Recording Countdown & Alert Sounds
+## Changes
 
-Add real-world-style audio cues around recording start/stop in both the **Speaking Drill** (`/drill`) and **Interview Session** (`/sessions/run/$sessionId`) flows.
+### 1. Speaking Drill — peek answer while recording
+In `src/routes/drill.tsx`, add the same Show/Hide reference answer toggle inside the `recording` phase card (below the video/timer, above the Stop button). Reuses the existing `showAnswer` state. Small, unobtrusive ghost button so it doesn't distract; collapsed by default so users only see it if they choose.
 
-### Sound cues
+### 2. Questions page — "Readable" answer view
+In `src/routes/questions.tsx`, keep the existing inline collapsible answer preview. Add a second button next to it: **"Read"** (BookOpen icon) that opens a shadcn `Dialog` showing the answer in a large, comfortably formatted panel:
+- Wider modal (max-w-2xl), generous padding
+- Larger type (`text-base leading-relaxed`), `whitespace-pre-wrap`
+- Scrollable body for long answers
+- Shows the question as the dialog title for context
+- Single shared dialog driven by a `readingQuestion` state (one dialog instance, not per-card)
 
-| Moment | Sound |
-|---|---|
-| Last 3 seconds of reading/prep countdown (3, 2, 1) | Short high "tick" beep (≈880 Hz, 120 ms) |
-| Recording starts | Longer confirm beep (≈1200 Hz, 250 ms) |
-| Recording ends (auto-stop OR manual stop) | Lower end beep (≈500 Hz, 350 ms) |
+### 3. Dark mode
+- Add a `ThemeProvider` (`src/components/theme-provider.tsx`) that toggles a `dark` class on `<html>`, persists choice to `localStorage`, defaults to system preference.
+- Add a `ThemeToggle` (sun/moon icon button) in `src/components/app-sidebar.tsx` footer.
+- Mount the provider in `src/routes/__root.tsx`.
+- Retune `src/styles.css` dark palette to a modern, readable Claude/Lovable-style scheme (warm near-black background, soft off-white foreground, muted borders, calibrated primary/accent contrast) using existing oklch tokens — no component-level color changes needed since everything uses semantic tokens.
+- Verify `recording` / `recording-foreground` and sidebar tokens have proper dark variants.
 
-Mirrors common camera/recording apps (e.g. Loom, iOS camera self-timer).
+## Technical notes
+- Tailwind v4 dark variant is already set up via `@custom-variant dark` in `src/styles.css` (class-based). Provider just toggles the class.
+- No new dependencies. shadcn `Dialog` and `lucide-react` icons (`Sun`, `Moon`, `BookOpen`) are already available.
+- No changes to filesystem, session runner, or data shapes.
 
-### Implementation
-
-1. **New helper** `src/lib/audio/cues.ts`
-   - Tiny WebAudio module — no asset files, no extra deps.
-   - Lazily creates one shared `AudioContext` on first use (must be triggered from a user gesture, which both flows already have: "Start" buttons).
-   - Exports `playTick()`, `playStart()`, `playEnd()` using `OscillatorNode` + `GainNode` with a short attack/decay envelope so they sound like clean beeps, not clicks.
-   - Exports `resumeAudio()` to unlock the context on the first click.
-   - Safe no-op on SSR / when `AudioContext` is unavailable.
-
-2. **`src/routes/sessions.run.$sessionId.tsx`**
-   - Call `resumeAudio()` inside the existing "Start" / begin handler.
-   - In the reading-phase countdown loop, call `playTick()` when `secondsLeft` becomes 3, 2, or 1.
-   - Call `playStart()` immediately before `setPhase("recording")` and `recorder.start()`.
-   - Call `playEnd()` when the recorder stops — both on auto-stop (answer timer hits 0) and on manual "Next/Stop" click, in one place inside the existing stop helper to avoid double-firing.
-
-3. **`src/routes/drill.tsx`**
-   - Same wiring, adapted to the drill state machine:
-     - On "Start Practice" click → `resumeAudio()`.
-     - Drill currently starts recording immediately (no reading countdown). Add an optional **3-2-1 pre-roll** before `MediaRecorder.start()`:
-       - Show a large `3 → 2 → 1` overlay on the webcam preview, 1 second per number, playing `playTick()` each step.
-       - Then `playStart()` and begin recording + stopwatch.
-     - On stop (manual, auto-stop in AUTO/TIMED modes, or cancel-then-finish) → `playEnd()` once.
-   - Pre-roll applies to all three modes (AUTO / FREE / TIMED).
-
-### Out of scope
-
-- No user setting to mute sounds (can be added later if requested).
-- No bundled audio files — synthesized so there's nothing to download or ship.
-- No changes to session metadata, types, or persisted recordings.
-
-### Files
-
-- **Create:** `src/lib/audio/cues.ts`
-- **Edit:** `src/routes/sessions.run.$sessionId.tsx`, `src/routes/drill.tsx`
+## Files touched
+- `src/routes/drill.tsx` — toggle inside recording phase
+- `src/routes/questions.tsx` — "Read" dialog button + shared Dialog
+- `src/components/theme-provider.tsx` — new
+- `src/components/theme-toggle.tsx` — new
+- `src/components/app-sidebar.tsx` — mount toggle
+- `src/routes/__root.tsx` — wrap with ThemeProvider
+- `src/styles.css` — refined dark tokens
