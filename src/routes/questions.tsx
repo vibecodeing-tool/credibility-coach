@@ -440,6 +440,27 @@ function QuestionsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!reading} onOpenChange={(o) => !o && setReading(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="font-display text-xl leading-snug">
+              {reading?.question}
+            </DialogTitle>
+            <DialogDescription>Reference answer — read-only view for study.</DialogDescription>
+          </DialogHeader>
+          <div className="mt-2 flex-1 overflow-y-auto rounded-md border bg-muted/20 p-6">
+            <article className="mx-auto max-w-prose whitespace-pre-wrap break-words font-sans text-base leading-relaxed text-foreground">
+              {reading?.answer?.trim() || (
+                <span className="italic text-muted-foreground">No reference answer available.</span>
+              )}
+            </article>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReading(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
