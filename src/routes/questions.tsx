@@ -4,7 +4,7 @@ import { Plus, Pencil, Trash2, Search, ChevronDown, Shuffle, Mic, BookOpen, Play
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { useQuestions } from "@/hooks/use-questions";
-import { playTick, playEnd, resumeAudio } from "@/lib/audio/cues";
+import { playStart, playEnd, resumeAudio } from "@/lib/audio/cues";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -78,14 +78,13 @@ function QuestionsPage() {
 
   useEffect(() => {
     if (!timerRunning) return;
-    // Play tick each second (elapsed changes)
-    playTick();
     if (timerMode === "timed" && readingLimit > 0 && elapsed >= readingLimit) {
       setTimerRunning(false);
       playEnd();
       toast.info("Time's up");
     }
   }, [elapsed, timerRunning, timerMode, readingLimit]);
+
 
   useEffect(() => {
     if (!reading) {
@@ -537,12 +536,13 @@ function QuestionsPage() {
                     resumeAudio();
                     if (timerMode === "timed" && readingLimit > 0 && elapsed >= readingLimit) setElapsed(0);
                     setTimerRunning(true);
+                    playStart();
                   }}
                 >
                   <Play className="mr-1 h-3.5 w-3.5" /> Start
                 </Button>
               ) : (
-                <Button size="sm" variant="outline" onClick={() => setTimerRunning(false)}>
+                <Button size="sm" variant="outline" onClick={() => { setTimerRunning(false); playEnd(); }}>
                   <Pause className="mr-1 h-3.5 w-3.5" /> Pause
                 </Button>
               )}
