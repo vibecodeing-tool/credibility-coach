@@ -536,12 +536,13 @@ function QuestionsPage() {
                     resumeAudio();
                     if (timerMode === "timed" && readingLimit > 0 && elapsed >= readingLimit) setElapsed(0);
                     setTimerRunning(true);
+                    playStart();
                   }}
                 >
                   <Play className="mr-1 h-3.5 w-3.5" /> Start
                 </Button>
               ) : (
-                <Button size="sm" variant="outline" onClick={() => setTimerRunning(false)}>
+                <Button size="sm" variant="outline" onClick={() => { setTimerRunning(false); playEnd(); }}>
                   <Pause className="mr-1 h-3.5 w-3.5" /> Pause
                 </Button>
               )}
