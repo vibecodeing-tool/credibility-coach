@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { Plus, Pencil, Trash2, Search, ChevronDown, Shuffle, Mic, BookOpen } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Plus, Pencil, Trash2, Search, ChevronDown, Shuffle, Mic, BookOpen, Play, Pause, RotateCcw, Timer } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { useQuestions } from "@/hooks/use-questions";
+import { playTick, playEnd, resumeAudio } from "@/lib/audio/cues";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
