@@ -78,14 +78,13 @@ function QuestionsPage() {
 
   useEffect(() => {
     if (!timerRunning) return;
-    // Play tick each second (elapsed changes)
-    playTick();
     if (timerMode === "timed" && readingLimit > 0 && elapsed >= readingLimit) {
       setTimerRunning(false);
       playEnd();
       toast.info("Time's up");
     }
   }, [elapsed, timerRunning, timerMode, readingLimit]);
+
 
   useEffect(() => {
     if (!reading) {
