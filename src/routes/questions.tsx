@@ -492,6 +492,73 @@ function QuestionsPage() {
             </DialogTitle>
             <DialogDescription>Reference answer — read-only view for study.</DialogDescription>
           </DialogHeader>
+
+          <div className="mt-1 flex flex-wrap items-center gap-2 rounded-md border bg-muted/30 p-2">
+            <div className="flex items-center gap-2 pr-2">
+              <Timer className="h-4 w-4 text-muted-foreground" />
+              <span className="font-mono text-lg tabular-nums">
+                {timerMode === "timed" && readingLimit > 0 ? fmt(remaining) : fmt(elapsed)}
+              </span>
+              {timerMode === "timed" && readingLimit > 0 && (
+                <span className="text-xs text-muted-foreground">of {fmt(readingLimit)}</span>
+              )}
+            </div>
+            <div className="flex items-center gap-1">
+              <Button
+                size="sm"
+                variant={timerMode === "free" ? "default" : "outline"}
+                onClick={() => {
+                  setTimerMode("free");
+                  setTimerRunning(false);
+                  setElapsed(0);
+                }}
+              >
+                Free
+              </Button>
+              <Button
+                size="sm"
+                variant={timerMode === "timed" ? "default" : "outline"}
+                disabled={!reading?.answerTime}
+                onClick={() => {
+                  setTimerMode("timed");
+                  setTimerRunning(false);
+                  setElapsed(0);
+                }}
+                title={reading?.answerTime ? `Stops at ${reading.answerTime}s` : "No answer time set"}
+              >
+                Timed{reading?.answerTime ? ` (${reading.answerTime}s)` : ""}
+              </Button>
+            </div>
+            <div className="ml-auto flex items-center gap-1">
+              {!timerRunning ? (
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    resumeAudio();
+                    if (timerMode === "timed" && readingLimit > 0 && elapsed >= readingLimit) setElapsed(0);
+                    setTimerRunning(true);
+                  }}
+                >
+                  <Play className="mr-1 h-3.5 w-3.5" /> Start
+                </Button>
+              ) : (
+                <Button size="sm" variant="outline" onClick={() => setTimerRunning(false)}>
+                  <Pause className="mr-1 h-3.5 w-3.5" /> Pause
+                </Button>
+              )}
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  setTimerRunning(false);
+                  setElapsed(0);
+                }}
+              >
+                <RotateCcw className="mr-1 h-3.5 w-3.5" /> Reset
+              </Button>
+            </div>
+          </div>
+
           <div className="mt-2 flex-1 overflow-y-auto rounded-md border bg-muted/20 p-6">
             <article className="mx-auto max-w-prose whitespace-pre-wrap break-words font-sans text-base leading-relaxed text-foreground">
               {reading?.answer?.trim() || (
@@ -504,6 +571,7 @@ function QuestionsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
     </div>
   );
 }
