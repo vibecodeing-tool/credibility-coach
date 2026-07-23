@@ -542,7 +542,7 @@ function QuestionsPage() {
                   <Play className="mr-1 h-3.5 w-3.5" /> Start
                 </Button>
               ) : (
-                <Button size="sm" variant="outline" onClick={() => { setTimerRunning(false); playEnd(); }}>
+                <Button size="sm" variant="outline" onClick={() => { setTimerRunning(false); resumeAudio(); playEnd(); }}>
                   <Pause className="mr-1 h-3.5 w-3.5" /> Pause
                 </Button>
               )}

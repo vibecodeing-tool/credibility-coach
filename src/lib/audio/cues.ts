@@ -99,9 +99,9 @@ export function playEnd(): void {
     const osc = c.createOscillator();
     const g = c.createGain();
     osc.type = "triangle";
-    osc.frequency.setValueAtTime(520, now);
-    osc.frequency.exponentialRampToValueAtTime(380, now + 0.28);
-    const peak = 0.08;
+    osc.frequency.setValueAtTime(600, now);
+    osc.frequency.exponentialRampToValueAtTime(450, now + 0.28);
+    const peak = 0.14;
     g.gain.setValueAtTime(0, now);
     g.gain.linearRampToValueAtTime(peak, now + 0.04);
     g.gain.exponentialRampToValueAtTime(0.0001, now + 0.42);
