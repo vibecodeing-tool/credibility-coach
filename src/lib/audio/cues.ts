@@ -90,7 +90,25 @@ export function playStart(): void {
 }
 
 
-/** Lower beep when recording stops. */
+/** Soft, warm tone when recording stops — gentle so it doesn't jar. */
 export function playEnd(): void {
-  beep({ freq: 500, duration: 0.35, type: "sine", gain: 0.22 });
+  const c = getCtx();
+  if (!c) return;
+  try {
+    const now = c.currentTime;
+    const osc = c.createOscillator();
+    const g = c.createGain();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(520, now);
+    osc.frequency.exponentialRampToValueAtTime(380, now + 0.28);
+    const peak = 0.08;
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(peak, now + 0.04);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.42);
+    osc.connect(g).connect(c.destination);
+    osc.start(now);
+    osc.stop(now + 0.46);
+  } catch {
+    /* noop */
+  }
 }
