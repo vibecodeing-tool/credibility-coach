@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { Plus, Pencil, Trash2, Search, ChevronDown, Shuffle, Mic, BookOpen } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Plus, Pencil, Trash2, Search, ChevronDown, Shuffle, Mic, BookOpen, Play, Pause, RotateCcw, Timer } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { useQuestions } from "@/hooks/use-questions";
+import { playTick, playEnd, resumeAudio } from "@/lib/audio/cues";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -58,6 +59,48 @@ function QuestionsPage() {
   const [openAnswers, setOpenAnswers] = useState<Record<string, boolean>>({});
   const [openVariations, setOpenVariations] = useState<Record<string, boolean>>({});
   const [reading, setReading] = useState<Question | null>(null);
+  const [timerMode, setTimerMode] = useState<"free" | "timed">("free");
+  const [timerRunning, setTimerRunning] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const tickRef = useRef<number | null>(null);
+
+  const readingLimit = timerMode === "timed" ? reading?.answerTime ?? 0 : 0;
+  const remaining = readingLimit > 0 ? Math.max(0, readingLimit - elapsed) : 0;
+
+  useEffect(() => {
+    if (!timerRunning) return;
+    const id = window.setInterval(() => {
+      setElapsed((e) => e + 1);
+    }, 1000);
+    tickRef.current = id;
+    return () => window.clearInterval(id);
+  }, [timerRunning]);
+
+  useEffect(() => {
+    if (!timerRunning) return;
+    // Play tick each second (elapsed changes)
+    playTick();
+    if (timerMode === "timed" && readingLimit > 0 && elapsed >= readingLimit) {
+      setTimerRunning(false);
+      playEnd();
+      toast.info("Time's up");
+    }
+  }, [elapsed, timerRunning, timerMode, readingLimit]);
+
+  useEffect(() => {
+    if (!reading) {
+      setTimerRunning(false);
+      setElapsed(0);
+      setTimerMode("free");
+    }
+  }, [reading]);
+
+  const fmt = (s: number) => {
+    const m = Math.floor(s / 60).toString().padStart(2, "0");
+    const ss = (s % 60).toString().padStart(2, "0");
+    return `${m}:${ss}`;
+  };
+
 
   const categories = useMemo(() => {
     const set = new Set<string>();
@@ -449,6 +492,73 @@ function QuestionsPage() {
             </DialogTitle>
             <DialogDescription>Reference answer — read-only view for study.</DialogDescription>
           </DialogHeader>
+
+          <div className="mt-1 flex flex-wrap items-center gap-2 rounded-md border bg-muted/30 p-2">
+            <div className="flex items-center gap-2 pr-2">
+              <Timer className="h-4 w-4 text-muted-foreground" />
+              <span className="font-mono text-lg tabular-nums">
+                {timerMode === "timed" && readingLimit > 0 ? fmt(remaining) : fmt(elapsed)}
+              </span>
+              {timerMode === "timed" && readingLimit > 0 && (
+                <span className="text-xs text-muted-foreground">of {fmt(readingLimit)}</span>
+              )}
+            </div>
+            <div className="flex items-center gap-1">
+              <Button
+                size="sm"
+                variant={timerMode === "free" ? "default" : "outline"}
+                onClick={() => {
+                  setTimerMode("free");
+                  setTimerRunning(false);
+                  setElapsed(0);
+                }}
+              >
+                Free
+              </Button>
+              <Button
+                size="sm"
+                variant={timerMode === "timed" ? "default" : "outline"}
+                disabled={!reading?.answerTime}
+                onClick={() => {
+                  setTimerMode("timed");
+                  setTimerRunning(false);
+                  setElapsed(0);
+                }}
+                title={reading?.answerTime ? `Stops at ${reading.answerTime}s` : "No answer time set"}
+              >
+                Timed{reading?.answerTime ? ` (${reading.answerTime}s)` : ""}
+              </Button>
+            </div>
+            <div className="ml-auto flex items-center gap-1">
+              {!timerRunning ? (
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    resumeAudio();
+                    if (timerMode === "timed" && readingLimit > 0 && elapsed >= readingLimit) setElapsed(0);
+                    setTimerRunning(true);
+                  }}
+                >
+                  <Play className="mr-1 h-3.5 w-3.5" /> Start
+                </Button>
+              ) : (
+                <Button size="sm" variant="outline" onClick={() => setTimerRunning(false)}>
+                  <Pause className="mr-1 h-3.5 w-3.5" /> Pause
+                </Button>
+              )}
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  setTimerRunning(false);
+                  setElapsed(0);
+                }}
+              >
+                <RotateCcw className="mr-1 h-3.5 w-3.5" /> Reset
+              </Button>
+            </div>
+          </div>
+
           <div className="mt-2 flex-1 overflow-y-auto rounded-md border bg-muted/20 p-6">
             <article className="mx-auto max-w-prose whitespace-pre-wrap break-words font-sans text-base leading-relaxed text-foreground">
               {reading?.answer?.trim() || (
@@ -461,6 +571,7 @@ function QuestionsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
     </div>
   );
 }
