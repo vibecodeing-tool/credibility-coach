@@ -59,6 +59,48 @@ function QuestionsPage() {
   const [openAnswers, setOpenAnswers] = useState<Record<string, boolean>>({});
   const [openVariations, setOpenVariations] = useState<Record<string, boolean>>({});
   const [reading, setReading] = useState<Question | null>(null);
+  const [timerMode, setTimerMode] = useState<"free" | "timed">("free");
+  const [timerRunning, setTimerRunning] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const tickRef = useRef<number | null>(null);
+
+  const readingLimit = timerMode === "timed" ? reading?.answerTime ?? 0 : 0;
+  const remaining = readingLimit > 0 ? Math.max(0, readingLimit - elapsed) : 0;
+
+  useEffect(() => {
+    if (!timerRunning) return;
+    const id = window.setInterval(() => {
+      setElapsed((e) => e + 1);
+    }, 1000);
+    tickRef.current = id;
+    return () => window.clearInterval(id);
+  }, [timerRunning]);
+
+  useEffect(() => {
+    if (!timerRunning) return;
+    // Play tick each second (elapsed changes)
+    playTick();
+    if (timerMode === "timed" && readingLimit > 0 && elapsed >= readingLimit) {
+      setTimerRunning(false);
+      playEnd();
+      toast.info("Time's up");
+    }
+  }, [elapsed, timerRunning, timerMode, readingLimit]);
+
+  useEffect(() => {
+    if (!reading) {
+      setTimerRunning(false);
+      setElapsed(0);
+      setTimerMode("free");
+    }
+  }, [reading]);
+
+  const fmt = (s: number) => {
+    const m = Math.floor(s / 60).toString().padStart(2, "0");
+    const ss = (s % 60).toString().padStart(2, "0");
+    return `${m}:${ss}`;
+  };
+
 
   const categories = useMemo(() => {
     const set = new Set<string>();
