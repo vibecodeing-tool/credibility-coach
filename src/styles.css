@@ -140,9 +140,9 @@
   --accent: oklch(0.3 0.012 65);
   --accent-foreground: oklch(0.97 0.008 80);
 
-  /* Search highlight: muted amber-gold against dark surfaces */
-  --highlight: oklch(0.76 0.13 80);
-  --highlight-foreground: oklch(0.20 0.03 80);
+  /* Search highlight: warm amber-gold against dark surfaces */
+  --highlight: oklch(0.72 0.11 65);
+  --highlight-foreground: oklch(0.18 0.03 80);
 
   --destructive: oklch(0.68 0.2 25);
   --destructive-foreground: oklch(0.98 0.01 0);
