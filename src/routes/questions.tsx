@@ -65,7 +65,7 @@ function highlightMatch(text: string, query: string): ReactNode {
     }
     if (idx > i) out.push(text.slice(i, idx));
     out.push(
-      <mark key={key++} className="rounded-sm bg-accent/50 px-0.5 text-accent-foreground">
+      <mark key={key++} className="rounded-sm bg-highlight px-0.5 font-medium text-highlight-foreground">
         {text.slice(idx, idx + q.length)}
       </mark>,
     );
