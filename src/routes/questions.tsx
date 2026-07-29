@@ -403,7 +403,8 @@ function QuestionsPage() {
                 </Collapsible>
               )}
             </Card>
-          ))}
+            );
+          })}
         </div>
       )}
 
