@@ -264,14 +264,43 @@ function QuestionsPage() {
         </Card>
       ) : (
         <div className="grid gap-3">
-          {filtered.map((q, idx) => (
+          {filtered.map((m, idx) => {
+            const q = m.q;
+            const rawQuery = search.trim();
+            const showVariationHint = m.variationIdx >= 0 && !m.questionMatch;
+            const answerOpen =
+              openAnswers[q.id] ?? (m.answerMatch && !m.questionMatch && m.variationIdx < 0);
+            return (
             <Card key={q.id} className="p-4">
               <div className="flex flex-wrap items-start gap-3">
                 <div className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-accent text-xs font-semibold text-accent-foreground">
                   {questions.findIndex((x) => x.id === q.id) + 1 || idx + 1}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium">{q.question}</p>
+                  <p className="font-medium">
+                    {m.questionMatch ? highlightMatch(q.question, rawQuery) : q.question}
+                  </p>
+                  {showVariationHint && q.alternativeQuestions && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Matches variation:{" "}
+                      <span className="italic">
+                        “
+                        {highlightMatch(
+                          snippetAround(q.alternativeQuestions[m.variationIdx], rawQuery),
+                          rawQuery,
+                        )}
+                        ”
+                      </span>
+                    </p>
+                  )}
+                  {m.answerMatch && !m.questionMatch && m.variationIdx < 0 && q.answer && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Matches answer:{" "}
+                      <span className="italic">
+                        “{highlightMatch(snippetAround(q.answer, rawQuery), rawQuery)}”
+                      </span>
+                    </p>
+                  )}
                   <div className="mt-2 flex flex-wrap gap-2">
                     {q.category && <Badge variant="secondary">{q.category}</Badge>}
                     <Badge variant="outline">Read {q.readingTime}s</Badge>
@@ -307,21 +336,21 @@ function QuestionsPage() {
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-1">
                 <Collapsible
-                  open={!!openAnswers[q.id]}
+                  open={answerOpen}
                   onOpenChange={(o) => setOpenAnswers((s) => ({ ...s, [q.id]: o }))}
                 >
                   <CollapsibleTrigger asChild>
                     <Button variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground">
                       <ChevronDown
-                        className={`mr-1 h-3.5 w-3.5 transition-transform ${openAnswers[q.id] ? "rotate-180" : ""}`}
+                        className={`mr-1 h-3.5 w-3.5 transition-transform ${answerOpen ? "rotate-180" : ""}`}
                       />
-                      {openAnswers[q.id] ? "Hide answer" : "Show answer"}
+                      {answerOpen ? "Hide answer" : "Show answer"}
                     </Button>
                   </CollapsibleTrigger>
                   <CollapsibleContent className="mt-2 basis-full">
                     {q.answer?.trim() ? (
                       <div className="max-h-72 overflow-y-auto whitespace-pre-wrap break-words rounded-md border bg-muted/30 p-3 text-sm leading-relaxed">
-                        {q.answer}
+                        {m.answerMatch ? highlightMatch(q.answer, rawQuery) : q.answer}
                       </div>
                     ) : (
                       <p className="rounded-md border border-dashed p-3 text-xs italic text-muted-foreground">
@@ -344,15 +373,15 @@ function QuestionsPage() {
               </div>
               {q.alternativeQuestions && q.alternativeQuestions.length > 0 && (
                 <Collapsible
-                  open={!!openVariations[q.id]}
+                  open={!!openVariations[q.id] || m.variationIdx >= 0}
                   onOpenChange={(o) => setOpenVariations((s) => ({ ...s, [q.id]: o }))}
                 >
                   <CollapsibleTrigger asChild>
                     <Button variant="ghost" size="sm" className="mt-1 h-8 px-2 text-xs text-muted-foreground">
                       <ChevronDown
-                        className={`mr-1 h-3.5 w-3.5 transition-transform ${openVariations[q.id] ? "rotate-180" : ""}`}
+                        className={`mr-1 h-3.5 w-3.5 transition-transform ${openVariations[q.id] || m.variationIdx >= 0 ? "rotate-180" : ""}`}
                       />
-                      {openVariations[q.id] ? "Hide variations" : "Show variations"}
+                      {openVariations[q.id] || m.variationIdx >= 0 ? "Hide variations" : "Show variations"}
                     </Button>
                   </CollapsibleTrigger>
                   <CollapsibleContent className="mt-2">
@@ -363,7 +392,9 @@ function QuestionsPage() {
                       <ul className="list-disc space-y-1.5 pl-5">
                         {q.alternativeQuestions.map((v, i) => (
                           <li key={i} className="whitespace-pre-wrap break-words">
-                            {v}
+                            {rawQuery && v.toLowerCase().includes(rawQuery.toLowerCase())
+                              ? highlightMatch(v, rawQuery)
+                              : v}
                           </li>
                         ))}
                       </ul>
