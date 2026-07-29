@@ -31,6 +31,8 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-highlight: var(--highlight);
+  --color-highlight-foreground: var(--highlight-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
@@ -83,6 +85,10 @@
   --accent: oklch(0.94 0.03 260);
   --accent-foreground: oklch(0.22 0.05 265);
 
+  /* Search highlight: soft cream/amber, high contrast on light backgrounds */
+  --highlight: oklch(0.94 0.04 85);
+  --highlight-foreground: oklch(0.30 0.05 80);
+
   --destructive: oklch(0.6 0.22 27);
   --destructive-foreground: oklch(0.98 0.01 250);
 
@@ -133,6 +139,10 @@
 
   --accent: oklch(0.3 0.012 65);
   --accent-foreground: oklch(0.97 0.008 80);
+
+  /* Search highlight: warm amber-gold against dark surfaces */
+  --highlight: oklch(0.72 0.11 65);
+  --highlight-foreground: oklch(0.18 0.03 80);
 
   --destructive: oklch(0.68 0.2 25);
   --destructive-foreground: oklch(0.98 0.01 0);
