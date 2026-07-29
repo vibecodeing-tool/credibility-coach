@@ -145,12 +145,28 @@ function QuestionsPage() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return questions.filter((qu) => {
-      if (category !== "__all__" && qu.category !== category) return false;
-      if (q && !qu.question.toLowerCase().includes(q)) return false;
-      return true;
-    });
-  }, [questions, search, category]);
+    const results: Array<{
+      q: Question;
+      variationIdx: number;
+      questionMatch: boolean;
+      answerMatch: boolean;
+    }> = [];
+    for (const qu of questions) {
+      if (category !== "__all__" && qu.category !== category) continue;
+      if (!q) {
+        results.push({ q: qu, variationIdx: -1, questionMatch: false, answerMatch: false });
+        continue;
+      }
+      const questionMatch = qu.question.toLowerCase().includes(q);
+      const variationIdx =
+        qu.alternativeQuestions?.findIndex((v) => v.toLowerCase().includes(q)) ?? -1;
+      const answerMatch = searchAnswers && !!qu.answer && qu.answer.toLowerCase().includes(q);
+      if (questionMatch || variationIdx >= 0 || answerMatch) {
+        results.push({ q: qu, variationIdx, questionMatch, answerMatch });
+      }
+    }
+    return results;
+  }, [questions, search, category, searchAnswers]);
 
   const openCreate = () => {
     setEditing({
