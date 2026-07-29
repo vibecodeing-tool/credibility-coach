@@ -85,8 +85,8 @@
   --accent: oklch(0.94 0.03 260);
   --accent-foreground: oklch(0.22 0.05 265);
 
-  /* Search highlight: soft amber-yellow, high contrast on light backgrounds */
-  --highlight: oklch(0.93 0.04 95);
+  /* Search highlight: soft cream/amber, high contrast on light backgrounds */
+  --highlight: oklch(0.94 0.04 85);
   --highlight-foreground: oklch(0.30 0.05 80);
 
   --destructive: oklch(0.6 0.22 27);
