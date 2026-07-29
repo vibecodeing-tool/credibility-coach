@@ -50,9 +50,44 @@ function newId() {
   return "q_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 }
 
+function highlightMatch(text: string, query: string): ReactNode {
+  if (!query) return text;
+  const q = query.toLowerCase();
+  const out: ReactNode[] = [];
+  let i = 0;
+  let key = 0;
+  const lower = text.toLowerCase();
+  while (i < text.length) {
+    const idx = lower.indexOf(q, i);
+    if (idx === -1) {
+      out.push(text.slice(i));
+      break;
+    }
+    if (idx > i) out.push(text.slice(i, idx));
+    out.push(
+      <mark key={key++} className="rounded-sm bg-accent/50 px-0.5 text-accent-foreground">
+        {text.slice(idx, idx + q.length)}
+      </mark>,
+    );
+    i = idx + q.length;
+  }
+  return <>{out}</>;
+}
+
+function snippetAround(text: string, query: string, radius = 60): string {
+  const idx = text.toLowerCase().indexOf(query.toLowerCase());
+  if (idx === -1) return text.slice(0, radius * 2);
+  const start = Math.max(0, idx - radius);
+  const end = Math.min(text.length, idx + query.length + radius);
+  const prefix = start > 0 ? "…" : "";
+  const suffix = end < text.length ? "…" : "";
+  return prefix + text.slice(start, end) + suffix;
+}
+
 function QuestionsPage() {
   const { questions, upsert, remove, loading } = useQuestions();
   const [search, setSearch] = useState("");
+  const [searchAnswers, setSearchAnswers] = useState(false);
   const [category, setCategory] = useState<string>("__all__");
   const [editing, setEditing] = useState<Question | null>(null);
   const [open, setOpen] = useState(false);
