@@ -1,33 +1,27 @@
-## Changes
+## Changes to `src/routes/questions.tsx`
 
-### 1. Speaking Drill — peek answer while recording
-In `src/routes/drill.tsx`, add the same Show/Hide reference answer toggle inside the `recording` phase card (below the video/timer, above the Stop button). Reuses the existing `showAnswer` state. Small, unobtrusive ghost button so it doesn't distract; collapsed by default so users only see it if they choose.
+### 1. Broader search scope
+Update the `filtered` memo so the search query matches against:
+- The main `question` text (as today)
+- Every entry in `alternativeQuestions` (variations)
+- The `answer` text — only when the "Search answers" toggle is on
 
-### 2. Questions page — "Readable" answer view
-In `src/routes/questions.tsx`, keep the existing inline collapsible answer preview. Add a second button next to it: **"Read"** (BookOpen icon) that opens a shadcn `Dialog` showing the answer in a large, comfortably formatted panel:
-- Wider modal (max-w-2xl), generous padding
-- Larger type (`text-base leading-relaxed`), `whitespace-pre-wrap`
-- Scrollable body for long answers
-- Shows the question as the dialog title for context
-- Single shared dialog driven by a `readingQuestion` state (one dialog instance, not per-card)
+### 2. "Search answers" toggle
+Add a small toggle next to the search input (shadcn `Toggle` or a compact `Button` with an icon like `FileText`, using `variant="outline"` / `pressed` state). Default off. When on:
+- Answer text is included in the filter above.
+- On each matching card, if the match came from the answer (i.e. the query appears in the answer but not in the question or variations), auto-reveal the collapsible answer preview and scroll the matching snippet into view.
+- The matched substring inside the answer is highlighted with a `<mark>` using the existing accent token (no new colors).
 
-### 3. Dark mode
-- Add a `ThemeProvider` (`src/components/theme-provider.tsx`) that toggles a `dark` class on `<html>`, persists choice to `localStorage`, defaults to system preference.
-- Add a `ThemeToggle` (sun/moon icon button) in `src/components/app-sidebar.tsx` footer.
-- Mount the provider in `src/routes/__root.tsx`.
-- Retune `src/styles.css` dark palette to a modern, readable Claude/Lovable-style scheme (warm near-black background, soft off-white foreground, muted borders, calibrated primary/accent contrast) using existing oklch tokens — no component-level color changes needed since everything uses semantic tokens.
-- Verify `recording` / `recording-foreground` and sidebar tokens have proper dark variants.
+### 3. Variation match hint
+When the query matches a variation (but not the main question), show a subtle line under the question title on that card:
+`Matches variation: "…<highlighted snippet>…"` — using the first matching variation, truncated to ~120 chars around the match. Uses `text-muted-foreground text-xs`.
 
-## Technical notes
-- Tailwind v4 dark variant is already set up via `@custom-variant dark` in `src/styles.css` (class-based). Provider just toggles the class.
-- No new dependencies. shadcn `Dialog` and `lucide-react` icons (`Sun`, `Moon`, `BookOpen`) are already available.
-- No changes to filesystem, session runner, or data shapes.
+### 4. Helper
+Add a small `highlightMatch(text, query)` helper inside the file that returns a React fragment with `<mark className="bg-accent/40 rounded-sm px-0.5">` around case-insensitive matches. Reused by the variation hint and the answer preview.
+
+## Not changed
+- No changes to data model, storage, other routes, or dark mode.
+- The existing per-card "Show/Hide answer" and "Read" dialog stay as-is; the search-driven auto-reveal only forces the collapsible open when an answer-match is found and search-answers is enabled.
 
 ## Files touched
-- `src/routes/drill.tsx` — toggle inside recording phase
-- `src/routes/questions.tsx` — "Read" dialog button + shared Dialog
-- `src/components/theme-provider.tsx` — new
-- `src/components/theme-toggle.tsx` — new
-- `src/components/app-sidebar.tsx` — mount toggle
-- `src/routes/__root.tsx` — wrap with ThemeProvider
-- `src/styles.css` — refined dark tokens
+- `src/routes/questions.tsx`
