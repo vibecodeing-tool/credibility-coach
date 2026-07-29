@@ -236,6 +236,17 @@ function QuestionsPage() {
               className="pl-9"
             />
           </div>
+          <Button
+            type="button"
+            variant={searchAnswers ? "default" : "outline"}
+            onClick={() => setSearchAnswers((v) => !v)}
+            aria-pressed={searchAnswers}
+            title="Also search inside reference answers"
+            className="sm:w-auto"
+          >
+            <FileText className="mr-2 h-4 w-4" />
+            {searchAnswers ? "Answers: on" : "Search answers"}
+          </Button>
           <Select value={category} onValueChange={setCategory}>
             <SelectTrigger className="sm:w-56">
               <SelectValue placeholder="All categories" />
