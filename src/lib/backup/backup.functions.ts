@@ -3,11 +3,14 @@ import { z } from "zod";
 
 import { generateBackupKey, isValidBackupKey } from "./keys";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 const snapshotSchema = z.object({
-  questions: z.array(z.unknown()),
-  sessions: z.array(z.unknown()),
-  settings: z.record(z.unknown()).optional(),
+  questions: z.array(z.any()),
+  sessions: z.array(z.any()),
+  settings: z.record(z.any()).optional(),
 });
+
+type Snapshot = { questions: any[]; sessions: any[]; settings?: Record<string, any> };
 
 const keySchema = z.string().refine(isValidBackupKey, "Invalid backup key");
 
@@ -55,7 +58,7 @@ export const updateBackup = createServerFn({ method: "POST" })
     if (!data.force) {
       const known = data.knownUpdatedAt ? Date.parse(data.knownUpdatedAt) : 0;
       if (Date.parse(existing.updated_at) > known) {
-        const cloudData = existing.data as { questions?: unknown[]; sessions?: unknown[] } | null;
+        const cloudData = existing.data as Snapshot | null;
         return {
           conflict: true as const,
           cloudUpdatedAt: existing.updated_at,
@@ -97,6 +100,6 @@ export const getBackup = createServerFn({ method: "POST" })
       version: row.version,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
-      data: row.data as { questions: unknown[]; sessions: unknown[]; settings?: unknown },
+      data: row.data as Snapshot,
     };
   });
