@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, ListChecks, PlayCircle, History, FolderOpen, Timer } from "lucide-react";
+import { LayoutDashboard, ListChecks, PlayCircle, History, FolderOpen, Timer, Cloud } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
