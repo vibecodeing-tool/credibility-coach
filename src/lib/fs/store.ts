@@ -50,6 +50,29 @@ export async function writeQuestions(
   await writeJSON(root, "questions.json", questions);
 }
 
+// ---------- backup.json (remembers the cloud backup key for this folder) ----------
+
+export interface StoredBackupMeta {
+  backupKey: string;
+  updatedAt: string;
+}
+
+export async function readBackupMeta(
+  root: FileSystemDirectoryHandle,
+): Promise<StoredBackupMeta | null> {
+  const data = await readJSON<StoredBackupMeta>(root, "backup.json");
+  return data && typeof data.backupKey === "string" ? data : null;
+}
+
+export async function writeBackupMeta(
+  root: FileSystemDirectoryHandle,
+  meta: StoredBackupMeta,
+): Promise<void> {
+  await writeJSON(root, "backup.json", meta);
+}
+
+
+
 // ---------- sessions ----------
 
 export async function listSessions(root: FileSystemDirectoryHandle): Promise<SessionMetadata[]> {
