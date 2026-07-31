@@ -87,7 +87,9 @@ export function FolderGate({ children }: { children: ReactNode }) {
               {busy ? "Opening…" : "Choose folder"}
             </Button>
             <p className="text-xs text-muted-foreground">
-              Nothing leaves your device. No backend, no database, no cloud storage.
+              Nothing leaves your device unless you choose to upload a backup from the Cloud Backup
+              page.
+
             </p>
           </CardContent>
         </Card>
