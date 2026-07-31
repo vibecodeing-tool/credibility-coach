@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, ListChecks, PlayCircle, History, FolderOpen, Timer } from "lucide-react";
+import { LayoutDashboard, ListChecks, PlayCircle, History, FolderOpen, Timer, Cloud } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -22,6 +22,8 @@ const nav = [
   { title: "Speaking Drill", url: "/drill", icon: Timer },
   { title: "New Session", url: "/sessions/new", icon: PlayCircle },
   { title: "History", url: "/sessions", icon: History, exact: true },
+  { title: "Cloud Backup", url: "/backup", icon: Cloud },
+
 ];
 
 export function AppSidebar() {

@@ -135,10 +135,12 @@ function ReviewSession() {
                       className="aspect-video w-full rounded-md bg-black"
                     />
                   ) : (
-                    <div className="grid aspect-video w-full place-items-center rounded-md bg-muted text-sm text-muted-foreground">
-                      Recording unavailable
+                    <div className="grid aspect-video w-full place-items-center rounded-md bg-muted p-4 text-center text-sm text-muted-foreground">
+                      Recording not on this device — video files stay on the machine that recorded
+                      them and are not part of a cloud backup.
                     </div>
                   )}
+
                   <div className="flex flex-col">
                     <div className="mb-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                       Reference answer
