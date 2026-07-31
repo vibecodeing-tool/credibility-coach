@@ -22,6 +22,8 @@ const nav = [
   { title: "Speaking Drill", url: "/drill", icon: Timer },
   { title: "New Session", url: "/sessions/new", icon: PlayCircle },
   { title: "History", url: "/sessions", icon: History, exact: true },
+  { title: "Cloud Backup", url: "/backup", icon: Cloud },
+
 ];
 
 export function AppSidebar() {
